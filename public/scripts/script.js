@@ -6,7 +6,7 @@ const manPosition = {
 	y: 0,
 	xVelocity: 0,
 	yVelocity: 0
-}
+};
 
 const speed = 10;
 const gravitySpeed = 1;
@@ -54,8 +54,8 @@ function handleKeyDown(e) {
 		manPosition.xVelocity = speed;
 	} else if (e.key === ' ') {
 		manPosition.yVelocity = -jumpSpeed;
-		console.log("l'espace")
-	} 
+		console.log("l'espace");
+	}
 }
 function handleKeyUp(e) {
 	//console.log('up', e)
