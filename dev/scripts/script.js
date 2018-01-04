@@ -34,6 +34,8 @@ function hitTest() {
 	}
 }
 
+
+
 function moveMan() {
 	gravity();
 	manPosition.x += manPosition.xVelocity;
