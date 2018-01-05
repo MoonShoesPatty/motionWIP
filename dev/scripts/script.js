@@ -35,17 +35,56 @@ const player = {
 	xVelocity: 0,
 	yVelocity: 0,
 	jumping: false,
+	grounded: false
 }
 
 // User input
 const keys = [];
 
+// Platforms Array
+const platforms = [];
+	// Add canvas bounds
+	platforms.push({
+		x: 0,
+		y: 0,
+		width: 1,
+		height: gameHeight
+	});
+	platforms.push({
+		x: 0,
+		y: gameHeight - 1,
+		width: gameWidth,
+		height: 50
+	});
+	platforms.push({
+		x: gameWidth - 1,
+		y: 0,
+		width: 1,
+		height: gameHeight
+	});
+
+	// Add in-game platforms
+	platforms.push({
+		x: 120,
+		y: 500,
+		width: 120,
+		height: 20
+	});
+	platforms.push({
+		x: 320,
+		y: 400,
+		width: 120,
+		height: 20
+	});
+	platforms.push({
+		x: 520,
+		y: 300,
+		width: 120,
+		height: 20
+	});
+
 // Redraw game
 function update() {
-	// Check keys
-	if (keys[38]) {
-		console.log('up');
-	}
 	// Right Arrow Key
 	if (keys[39]) {
 		// multiply everything by a factor of (1) -> moves the character right		
@@ -58,35 +97,88 @@ function update() {
 	}
 	//      UP   or   SPACE
 	if (keys[38] || keys[32]) {
-		if (!player.jumping) {
-			player.jumping = true;
-			player.yVelocity = -player.jumpSpeed;
-		}
+		jump();
 	}
 	// Move player
-	if (!player.jumping && !(keys[39] || keys[37])) {
+	if (player.grounded && !(keys[39] || keys[37])) {
 		player.xVelocity *= friction;
 	}
 	player.yVelocity += gravity;
+
+	// Clear before drawing
+	ctx.clearRect(0, 0, gameWidth, gameHeight);
+
+	// Draw platforms
+	ctx.fillStyle = 'white';
+	ctx.beginPath();
+
+	player.grounded = false;
+	platforms.forEach(platform => {
+		ctx.fillRect(platform.x, platform.y, platform.width, platform.height);
+		let collisionDirection = collisonCheck(player, platform);
+		
+		if (collisionDirection === "l" || collisionDirection === "r") {
+			player.xVelocity = 0;
+			player.jumping = false;
+		} else if (collisionDirection === "b") {
+			player.grounded = true;
+			player.jumping = false;
+		} else if (collisionDirection === "t") {
+			player.yVelocity *= -0.2;
+		} 
+	})
+
+	if (player.grounded) {
+		player.yVelocity = 0;
+	}
+
 	player.x += player.xVelocity;
 	player.y += player.yVelocity;
-	// Add horizontal bounds
-	if (player.x >= gameWidth - player.width) {
-		player.x = gameWidth - player.width;
-	} else if (player.x <= 0) {
-		player.x = 0;
-	}
-	// Add bottom boundary
-	if (player.y >= gameHeight - player.height) {
-		player.y = gameHeight - player.height;
-		player.jumping = false;
-	}
+
+	ctx.fill();
+
 	// Draw player
-	ctx.clearRect(0, 0, gameWidth, gameHeight);
 	ctx.fillStyle = '#12B4E9';
 	ctx.fillRect(player.x, player.y, player.width, player.height);
 	// Run the game!
 	requestAnimationFrame(update);
+}
+
+// Collision check - platforms - credit to http://www.somethinghitme.com
+function collisonCheck(shapeA, shapeB) {
+	// get the vectors to check against
+	const vX = (shapeA.x + (shapeA.width / 2)) - (shapeB.x + (shapeB.width / 2));
+	const vY = (shapeA.y + (shapeA.height / 2)) - (shapeB.y + (shapeB.height / 2));
+	// add the half widths and half heights of the objects
+	const hWidths = (shapeA.width / 2) + (shapeB.width / 2);
+	const hHeights = (shapeA.height / 2) + (shapeB.height / 2);
+	// return value - which direction are we colliding?
+	let colDir = null;
+
+	// if the x and y vector are less than the half width or half height, they we must be inside the object, causing a collision
+	if (Math.abs(vX) < hWidths && Math.abs(vY) < hHeights) {
+		// figures out on which side we are colliding (top, bottom, left, or right)         
+		const oX = hWidths - Math.abs(vX);            
+		const oY = hHeights - Math.abs(vY);         
+		if (oX >= oY) {
+			if (vY > 0) {
+				colDir = "t";
+				shapeA.y += oY;
+			} else {
+				colDir = "b";
+				shapeA.y -= oY;
+			}
+		} else {
+			if (vX > 0) {
+				colDir = "l";
+				shapeA.x += oX;
+			} else {
+				colDir = "r";
+				shapeA.x -= oX;
+			}
+		}
+	}
+	return colDir;
 }
 
 // Handle keypresses
@@ -107,6 +199,14 @@ function horizontalMove(direction) {
 	}
 	if ((player.xVelocity * direction) < player.speed) {
 		player.xVelocity = player.xVelocity + (player.acceleration * direction);
+	}
+}
+
+function jump() {
+	if (!player.jumping && player.grounded) {
+		player.jumping = true;
+		player.grounded = false;
+		player.yVelocity = -player.jumpSpeed;
 	}
 }
 
