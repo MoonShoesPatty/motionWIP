@@ -1,6 +1,6 @@
-todo.txt
 node_modules/
+public/
 dev/scripts/usefulExample.js
 dev/scripts/usefulExample02.js
 dev/scripts/script_donotuse.js
-public/
+todo.txt

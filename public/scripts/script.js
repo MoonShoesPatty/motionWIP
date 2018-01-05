@@ -22,23 +22,12 @@ canvas.style.left = '20px';
 const playerSize = 40;
 const friction = 0.5;
 const gravity = 0.7;
+const floatLength = 20; //time that user can hold to jump higher - higher the number, higher user can jump
+const runSpeed = 12;
+const walkSpeed = 6;
 
-// Player object
-const player = {
-	x: gameWidth / 2.2,
-	y: gameHeight - playerSize,
-	width: playerSize,
-	height: playerSize,
-	speed: 6,
-	acceleration: 2,
-	jumpSpeed: 20,
-	xVelocity: 0,
-	yVelocity: 0,
-	jumping: false,
-	grounded: false
-
-	// User input
-};const keys = [];
+// User input
+const keys = [];
 
 // Platforms Array
 const platforms = [];
@@ -82,8 +71,23 @@ platforms.push({
 	height: 20
 });
 
-// Redraw game
-function update() {
+// Player object
+const player = {
+	x: gameWidth / 2.2,
+	y: gameHeight - playerSize,
+	width: playerSize,
+	height: playerSize,
+	speed: walkSpeed,
+	acceleration: 1,
+	jumpSpeed: 15,
+	xVelocity: 0,
+	yVelocity: 0,
+	jumping: false,
+	canExtendJump: floatLength,
+	grounded: false
+
+	// Redraw game
+};function update() {
 	// Right Arrow Key
 	if (keys[39]) {
 		// multiply everything by a factor of (1) -> moves the character right		
@@ -98,6 +102,15 @@ function update() {
 	if (keys[38] || keys[32]) {
 		jump();
 	}
+	// SHIFT for RUN
+	if (keys[16]) {
+		player.speed = runSpeed;
+	} else {
+		player.speed = walkSpeed;
+		if (Math.abs(player.xVelocity) > walkSpeed) {
+			player.xVelocity /= 1.1;
+		}
+	}
 	// Move player
 	if (player.grounded && !(keys[39] || keys[37])) {
 		player.xVelocity *= friction;
@@ -108,12 +121,13 @@ function update() {
 	ctx.clearRect(0, 0, gameWidth, gameHeight);
 
 	// Draw platforms
-	ctx.fillStyle = 'white';
+	ctx.strokeStyle = 'white';
+	ctx.lineWidth = 2;
 	ctx.beginPath();
 
 	player.grounded = false;
 	platforms.forEach(platform => {
-		ctx.fillRect(platform.x, platform.y, platform.width, platform.height);
+		ctx.strokeRect(platform.x, platform.y, platform.width, platform.height);
 		let collisionDirection = collisonCheck(player, platform);
 
 		if (collisionDirection === "l" || collisionDirection === "r") {
@@ -127,18 +141,21 @@ function update() {
 		}
 	});
 
+	// counteract gravity while player's feet are on the ground
 	if (player.grounded) {
 		player.yVelocity = 0;
+		player.canExtendJump = floatLength;
+	} else {
+		player.canExtendJump--;
 	}
 
+	// Move the player based on x & y velocity calculations above
 	player.x += player.xVelocity;
 	player.y += player.yVelocity;
 
-	ctx.fill();
-
 	// Draw player
-	ctx.fillStyle = '#12B4E9';
-	ctx.fillRect(player.x, player.y, player.width, player.height);
+	ctx.strokeStyle = '#12B4E9';
+	ctx.strokeRect(player.x, player.y, player.width, player.height);
 	// Run the game!
 	requestAnimationFrame(update);
 }
@@ -163,7 +180,7 @@ function collisonCheck(shapeA, shapeB) {
 			if (vY > 0) {
 				colDir = "t";
 				shapeA.y += oY;
-			} else {
+			} else if (vY < 0) {
 				colDir = "b";
 				shapeA.y -= oY;
 			}
@@ -190,22 +207,29 @@ function handleKeyup(e) {
 
 // Motion functions - respond to keypresses
 function horizontalMove(direction) {
+	// If player is moving in the opposite direction and their feet are on the ground, stop them
 	if (player.xVelocity * direction < 0 && !player.jumping) {
 		player.xVelocity = 0;
 	}
+	// If the player is in midair, give less horizontal control
 	if (player.jumping) {
 		player.xVelocity = player.xVelocity + player.acceleration * direction * -1 / 1.2;
 	}
+	// If the player is not moving at max speed, speed up!
 	if (player.xVelocity * direction < player.speed) {
 		player.xVelocity = player.xVelocity + player.acceleration * direction;
 	}
 }
 
 function jump() {
+	// If the player's feet are on the ground, have them jump
 	if (!player.jumping && player.grounded) {
 		player.jumping = true;
 		player.grounded = false;
 		player.yVelocity = -player.jumpSpeed;
+		//setInterval(() => player.yVelocity--, 100);
+	} else if (player.canExtendJump > 0 && (keys[38] || keys[32])) {
+		player.yVelocity -= gravity / 1.7;
 	}
 }
 
