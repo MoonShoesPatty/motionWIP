@@ -1,4 +1,4 @@
-// Redraw function in canvas
+// Redraw function in canvas, called later to refresh graphics
 (function () {
 	const requestAnimationFrame = window.requestAnimationFrame || window.mozRequestAnimationFrame || window.webkitRequestAnimationFrame || window.msRequestAnimationFrame;
 	window.requestAnimationFrame = requestAnimationFrame;
@@ -19,9 +19,9 @@ canvas.style.top = '20px';
 canvas.style.left = '20px';
 
 // General game variables
-const playerSize = 30;
-const friction = 0.8;
-const gravity = 0.5;
+const playerSize = 40;
+const friction = 0.5;
+const gravity = 0.7;
 
 // Player object
 const player = {
@@ -29,11 +29,12 @@ const player = {
 	y: gameHeight - playerSize,
 	width: playerSize,
 	height: playerSize,
-	speed: 5,
-	jumpSpeed: 10,
+	speed: 6,
+	acceleration: 2,
+	jumpSpeed: 20,
 	xVelocity: 0,
 	yVelocity: 0,
-	jumping: false
+	jumping: false,
 }
 
 // User input
@@ -45,16 +46,17 @@ function update() {
 	if (keys[38]) {
 		console.log('up');
 	}
+	// Right Arrow Key
 	if (keys[39]) {
-		if (player.xVelocity < player.speed) {
-			player.xVelocity++;
-		}
+		// multiply everything by a factor of (1) -> moves the character right		
+		horizontalMove(1);
 	}
+	// Left Arrow Key
 	if (keys[37]) {
-		if (player.xVelocity > -player.speed) {
-			player.xVelocity--;
-		}
+		// multiply everything by a factor of (-1) -> moves the character left
+		horizontalMove(-1);
 	}
+	//      UP   or   SPACE
 	if (keys[38] || keys[32]) {
 		if (!player.jumping) {
 			player.jumping = true;
@@ -62,7 +64,7 @@ function update() {
 		}
 	}
 	// Move player
-	if (!player.jumping) {
+	if (!player.jumping && !(keys[39] || keys[37])) {
 		player.xVelocity *= friction;
 	}
 	player.yVelocity += gravity;
@@ -93,6 +95,19 @@ function handleKeydown(e) {
 }
 function handleKeyup(e) {
 	keys[e.keyCode] = false;
+}
+
+// Motion functions - respond to keypresses
+function horizontalMove(direction) {
+	if ((player.xVelocity * direction) < 0 && !player.jumping) {
+		player.xVelocity = 0;
+	}
+	if (player.jumping) {
+		player.xVelocity = player.xVelocity + ((player.acceleration * direction * -1) / 1.2);
+	}
+	if ((player.xVelocity * direction) < player.speed) {
+		player.xVelocity = player.xVelocity + (player.acceleration * direction);
+	}
 }
 
 // Key watchers
