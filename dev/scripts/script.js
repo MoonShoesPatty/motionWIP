@@ -223,16 +223,30 @@ function horizontalMove(direction) {
 	}
 }
 
+// Jump function - activated by up arrow or spacebar
 function jump() {
 	// If the player's feet are on the ground, have them jump
 	if (!player.jumping && player.grounded) {
 		player.jumping = true;
 		player.grounded = false;
 		player.yVelocity = -player.jumpSpeed;
-		//setInterval(() => player.yVelocity--, 100);
 	} else if (player.canExtendJump > 0 && (keys[38] || keys[32])) {
+		// Allow player to extend jump if soon enough after jump AND they are holding jump key
 		player.yVelocity -= gravity / 1.7;
 	}
+}
+
+// Bounce player while they walk
+function walkCycle() {
+	
+}
+// Squish player when they land on the ground after falling
+function hitGround() {
+
+}
+// Set player to regular shape
+function resetPlayerShape() {
+
 }
 
 // Key watchers
