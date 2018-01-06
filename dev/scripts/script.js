@@ -25,7 +25,13 @@ const gravity = 0.7;
 const floatLength = 20; //time that user can hold to jump higher - higher the number, higher user can jump
 const runSpeed = 12;
 const walkSpeed = 6;
+const scrollBound = 200; //distance before the edge of the screen where level scroll function begins
+const levelWidth = gameWidth * 4; // upper bound for the screen to scroll right
+// measured in 'gameWidth' units (i.e. this level is 5 gameWidths long)
+// measured from leftmost bound - so (* 4) makes a playable area of FIVE gameWidths long
 
+// scroll distance, used to offset platforms as screen scrolls
+let scrollDistance = 0;
 
 // User input
 const keys = [];
@@ -37,19 +43,22 @@ const platforms = [];
 		x: 0,
 		y: 0,
 		width: 1,
-		height: gameHeight
+		height: gameHeight,
+		bound: true
 	});
 	platforms.push({
 		x: 0,
 		y: gameHeight - 1,
 		width: gameWidth,
-		height: 50
+		height: 50,
+		bound: true
 	});
 	platforms.push({
 		x: gameWidth - 1,
 		y: 0,
 		width: 1,
-		height: gameHeight
+		height: gameHeight,
+		bound: true
 	});
 
 	// Add in-game platforms
@@ -69,6 +78,50 @@ const platforms = [];
 		x: 520,
 		y: 300,
 		width: 120,
+		height: 20
+	});
+
+	platforms.push({
+		x: 1920,
+		y: 500,
+		width: 120,
+		height: 20
+	});
+	platforms.push({
+		x: 2120,
+		y: 400,
+		width: 120,
+		height: 20
+	});
+	platforms.push({
+		x: 2320,
+		y: 300,
+		width: 120,
+		height: 20
+	});
+
+	platforms.push({
+		x: gameWidth,
+		y: 0,
+		width: 2,
+		height: 20
+	});
+	platforms.push({
+		x: gameWidth * 2,
+		y: 0,
+		width: 2,
+		height: 20
+	});
+	platforms.push({
+		x: gameWidth * 3,
+		y: 0,
+		width: 2,
+		height: 20
+	});
+	platforms.push({
+		x: gameWidth * 4,
+		y: 0,
+		width: 2,
 		height: 20
 	});
 
@@ -129,7 +182,11 @@ function update() {
 
 	player.grounded = false;
 	platforms.forEach(platform => {
-		ctx.strokeRect(platform.x, platform.y, platform.width, platform.height);
+		ctx.strokeRect(
+			(platform.bound) ? platform.x : platform.x + scrollDistance,
+			platform.y, 
+			platform.width, 
+			platform.height);
 		let collisionDirection = collisonCheck(player, platform);
 		
 		if (collisionDirection === "l" || collisionDirection === "r") {
@@ -151,8 +208,34 @@ function update() {
 		player.canExtendJump--;
 	}
 
-	// Move the player based on x & y velocity calculations above
-	player.x += player.xVelocity;
+	// Move the player based on xVelocity calculations above
+	// If the player is within the 'playable' area - before scroll bounds on either side
+	if ((player.x > scrollBound) && (player.x < (gameWidth - scrollBound))) {
+		player.x += player.xVelocity;
+	} 
+	// Else, the player is pushing the screen on the RIGHT bound
+	else if (player.x >= (gameWidth - scrollBound)) {
+		// Push the screen RIGHT if that's the direction player is walking
+		if ((player.xVelocity > 0) && (-scrollDistance < levelWidth)) {
+			scrollDistance -= player.xVelocity;
+		}
+		// otherwise allow the player to walk back toward the middle
+		else {
+			player.x += player.xVelocity;
+		}
+	} 
+	// Else, the player is pushing the LEFT bound
+	else if (player.x <= scrollBound) {
+		// Push the screen LEFT if that's the direction player is walking
+		if ((player.xVelocity < 0) && (scrollDistance < 0)) {
+			scrollDistance -= player.xVelocity;
+		}
+		// otherwise allow the player to walk back toward the middle
+		else {
+			player.x += player.xVelocity;
+		}
+	}
+	// yVelocity is much easier.
 	player.y += player.yVelocity;
 
 	// Draw player
@@ -165,7 +248,7 @@ function update() {
 // Collision check - platforms - credit to http://www.somethinghitme.com
 function collisonCheck(shapeA, shapeB) {
 	// get the vectors to check against
-	const vX = (shapeA.x + (shapeA.width / 2)) - (shapeB.x + (shapeB.width / 2));
+	const vX = (shapeA.x + (shapeA.width / 2)) - (plusScrollDistance(shapeB) + (shapeB.width / 2));
 	const vY = (shapeA.y + (shapeA.height / 2)) - (shapeB.y + (shapeB.height / 2));
 	// add the half widths and half heights of the objects
 	const hWidths = (shapeA.width / 2) + (shapeB.width / 2);
@@ -197,6 +280,13 @@ function collisonCheck(shapeA, shapeB) {
 		}
 	}
 	return colDir;
+}
+
+// return platform.x coordinate for canvas bounds,
+// return platform.x coordinate PLUS scroll distance for platforms
+// nice little function to keep logic clean ^_^
+function plusScrollDistance(platform) {
+	return (platform.bound) ? platform.x : platform.x + scrollDistance;
 }
 
 // Handle keypresses
