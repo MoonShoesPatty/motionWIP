@@ -25,6 +25,7 @@ const gravity = 0.7;
 const floatLength = 20; //time that user can hold to jump higher - higher the number, higher user can jump
 const runSpeed = 12;
 const walkSpeed = 6;
+const coinSize = 15;
 const scrollBound = 200; //distance before the edge of the screen where level scroll function begins
 const levelWidth = gameWidth * 4; // upper bound for the screen to scroll right
 // measured in 'gameWidth' units (i.e. this level is 5 gameWidths long)
@@ -35,6 +36,14 @@ let scrollDistance = 0;
 
 // User input
 const keys = [];
+
+// Platforms Array structure:
+	// MANDATORY
+	//  x: x position of left side of platform. 
+	//
+	//
+	//
+	// OPTIONAL PROPERTIES
 
 // Platforms Array
 const platforms = [];
@@ -125,6 +134,34 @@ const platforms = [];
 		height: 20
 	});
 
+// Items array
+const items = [];
+	//
+	items.push({
+		x: 180,
+		y: 400,
+		width: coinSize,
+		height: coinSize,
+		coin: true,
+		collected: false
+	});
+	items.push({
+		x: 380,
+		y: 300,
+		width: coinSize,
+		height: coinSize,
+		coin: true,
+		collected: false
+	});
+	items.push({
+		x: 580,
+		y: 200,
+		width: coinSize,
+		height: coinSize,
+		coin: true,
+		collected: false
+	});
+
 // Player object
 const player = {
 	x: gameWidth / 2.2,
@@ -138,7 +175,8 @@ const player = {
 	yVelocity: 0,
 	jumping: false,
 	canExtendJump: floatLength,
-	grounded: false
+	grounded: false,
+	score: 0
 }
 
 // Redraw game
@@ -175,19 +213,35 @@ function update() {
 	// Clear before drawing
 	ctx.clearRect(0, 0, gameWidth, gameHeight);
 
-	// Draw platforms
-	ctx.strokeStyle = 'white';
+	// Draw objects in world
+	ctx.strokeStyle = 'yellow';
 	ctx.lineWidth = 2;
 	ctx.beginPath();
 
 	player.grounded = false;
+	// Draw coins
+	items.forEach(item => {
+		let collisionDirection;
+		if (item.coin && !item.collected) {
+			ctx.strokeRect(item.x + scrollDistance,	item.y,	coinSize, coinSize);
+			collisionDirection = coinCheck(player, item);
+		}
+		// console.log(collisionDirection);
+		if (collisionDirection) {
+			item.collected = true;
+			player.score += 100;
+		}
+	});
+	// Draw platforms
+	collisionDirection = false;
+	ctx.strokeStyle = 'white';	
 	platforms.forEach(platform => {
 		ctx.strokeRect(
 			(platform.bound) ? platform.x : platform.x + scrollDistance,
 			platform.y, 
 			platform.width, 
 			platform.height);
-		let collisionDirection = collisonCheck(player, platform);
+		let collisionDirection = collisionCheck(player, platform);
 		
 		if (collisionDirection === "l" || collisionDirection === "r") {
 			player.xVelocity = 0;
@@ -245,8 +299,26 @@ function update() {
 	requestAnimationFrame(update);
 }
 
+// Collision check - coins - credit to http://www.somethinghitme.com
+function coinCheck(player, coin) {
+	// get the vectors to check against
+	const vX = (player.x + (player.width / 2)) - (plusScrollDistance(coin) + (coinSize / 2));
+	const vY = (player.y + (player.height / 2)) - (coin.y + (coinSize / 2));
+	// add the half widths and half heights of the objects
+	const hWidths = (player.width / 2) + (coinSize / 2);
+	const hHeights = (player.height / 2) + (coinSize / 2);
+	// return value - are we colliding?
+	let collision = null;
+
+	// if the x and y vector are less than the half width or half height, they we must be inside the object, causing a collision
+	if (Math.abs(vX) < hWidths && Math.abs(vY) < hHeights) {
+		collision = true;
+	}
+	return collision;
+}
+
 // Collision check - platforms - credit to http://www.somethinghitme.com
-function collisonCheck(shapeA, shapeB) {
+function collisionCheck(shapeA, shapeB) {
 	// get the vectors to check against
 	const vX = (shapeA.x + (shapeA.width / 2)) - (plusScrollDistance(shapeB) + (shapeB.width / 2));
 	const vY = (shapeA.y + (shapeA.height / 2)) - (shapeB.y + (shapeB.height / 2));
