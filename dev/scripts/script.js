@@ -23,13 +23,16 @@ const playerSize = 40;
 const friction = 0.5;
 const gravity = 0.7;
 const floatLength = 20; //time that user can hold to jump higher - higher the number, higher user can jump
-const runSpeed = 12;
-const walkSpeed = 6;
+const runSpeed = 10;
+const walkSpeed = 5;
 const coinSize = 15;
 const scrollBound = 200; //distance before the edge of the screen where level scroll function begins
 const levelWidth = gameWidth * 4; // upper bound for the screen to scroll right
 // measured in 'gameWidth' units (i.e. this level is 5 gameWidths long)
 // measured from leftmost bound - so (* 4) makes a playable area of FIVE gameWidths long
+
+const deathDropSpeed = -10;
+const deathPauseLength = 2000;
 
 // scroll distance, used to offset platforms as screen scrolls
 let scrollDistance = 0;
@@ -136,31 +139,45 @@ const platforms = [];
 
 // Items array
 const items = [];
-	//
+	// coin items
 	items.push({
-		x: 180,
+		x: 172.5,
 		y: 400,
-		width: coinSize,
-		height: coinSize,
 		coin: true,
 		collected: false
 	});
 	items.push({
-		x: 380,
+		x: 372.5,
 		y: 300,
-		width: coinSize,
-		height: coinSize,
 		coin: true,
 		collected: false
 	});
 	items.push({
-		x: 580,
+		x: 572.5,
 		y: 200,
-		width: coinSize,
-		height: coinSize,
 		coin: true,
 		collected: false
 	});
+
+// Enemies Array
+const enemies = [];
+	// emeny items
+	enemies.push({
+		x: gameWidth * 1.5,
+		y: gameHeight - playerSize,
+		width: playerSize,
+		height: playerSize,
+		speed: 3,
+		alive: true
+	})
+	enemies.push({
+		x: gameWidth * 1.6,
+		y: gameHeight - playerSize,
+		width: playerSize,
+		height: playerSize,
+		speed: 3,
+		alive: true
+	})
 
 // Player object
 const player = {
@@ -169,14 +186,15 @@ const player = {
 	width: playerSize,
 	height: playerSize,
 	speed: walkSpeed,
-	acceleration: 1,
+	acceleration: 0.8,
 	jumpSpeed: 15,
 	xVelocity: 0,
 	yVelocity: 0,
 	jumping: false,
 	canExtendJump: floatLength,
 	grounded: false,
-	score: 0
+	score: 0,
+	alive: true
 }
 
 // Redraw game
@@ -232,8 +250,24 @@ function update() {
 			player.score += 100;
 		}
 	});
+	// Draw enemies
+	ctx.strokeStyle = 'red';
+	enemies.forEach(enemy => {
+		let collisionDirection;
+		if (enemy.alive) {
+			ctx.strokeRect(enemy.x + scrollDistance, enemy.y, playerSize, playerSize);
+			enemy.x -= enemy.speed;
+			collisionDirection = collisionCheck(player, enemy);
+		}
+		if (collisionDirection === "l" || collisionDirection === "r" || collisionDirection === "t") {
+			player.alive = false;
+		} else if (collisionDirection === "b") {
+			player.yVelocity = -player.yVelocity * 0.5;
+			enemy.speed = 0;
+			enemy.alive = false;
+		}
+	})
 	// Draw platforms
-	collisionDirection = false;
 	ctx.strokeStyle = 'white';	
 	platforms.forEach(platform => {
 		ctx.strokeRect(
@@ -251,7 +285,7 @@ function update() {
 			player.jumping = false;
 		} else if (collisionDirection === "t") {
 			player.yVelocity *= -0.2;
-		} 
+		}
 	})
 
 	// counteract gravity while player's feet are on the ground
@@ -264,11 +298,11 @@ function update() {
 
 	// Move the player based on xVelocity calculations above
 	// If the player is within the 'playable' area - before scroll bounds on either side
-	if ((player.x > scrollBound) && (player.x < (gameWidth - scrollBound))) {
+	if ((player.x > scrollBound) && (player.x < (gameWidth - (scrollBound * 2)))) {
 		player.x += player.xVelocity;
 	} 
 	// Else, the player is pushing the screen on the RIGHT bound
-	else if (player.x >= (gameWidth - scrollBound)) {
+	else if (player.x >= (gameWidth - (scrollBound * 2))) {
 		// Push the screen RIGHT if that's the direction player is walking
 		if ((player.xVelocity > 0) && (-scrollDistance < levelWidth)) {
 			scrollDistance -= player.xVelocity;
@@ -294,9 +328,15 @@ function update() {
 
 	// Draw player
 	ctx.strokeStyle = '#12B4E9';
-	ctx.strokeRect(player.x, player.y, player.width, player.height);
-	// Run the game!
-	requestAnimationFrame(update);
+	if (player.alive) {
+		ctx.strokeRect(player.x, player.y, player.width, player.height);
+
+		// Run the game!
+		requestAnimationFrame(update);
+	} else {
+		player.yVelocity = deathDropSpeed;
+		deathDelay(deathPauseLength);
+	}
 }
 
 // Collision check - coins - credit to http://www.somethinghitme.com
@@ -409,6 +449,43 @@ function hitGround() {
 // Set player to regular shape
 function resetPlayerShape() {
 
+}
+// Animate the player dying
+function deathAnimation() {
+	ctx.clearRect(0, 0, gameWidth, gameHeight);
+	// draw platforms
+	ctx.strokeStyle = 'white';
+	platforms.forEach(platform => {
+		ctx.strokeRect(
+			(platform.bound) ? platform.x : platform.x + scrollDistance,
+			platform.y,
+			platform.width,
+			platform.height);
+	});
+	// draw items
+	ctx.strokeStyle = 'yellow';
+	items.forEach(item => {
+		if (item.coin && !item.collected) {
+			ctx.strokeRect(item.x + scrollDistance, item.y, coinSize, coinSize);
+		}
+	})
+	// draw enemies
+	ctx.strokeStyle = 'red';
+	enemies.forEach(enemy => {
+		if (enemy.alive) {
+			ctx.strokeRect(enemy.x + scrollDistance, enemy.y, playerSize, playerSize);
+		}
+	})
+
+	ctx.strokeStyle = '#12B4E9';
+	player.y += player.yVelocity;
+	player.yVelocity += 1;
+	ctx.strokeRect(player.x, player.y, player.width, player.height);
+	requestAnimationFrame(deathAnimation);
+}
+
+function delay(delayTime) {
+	setTimeout(deathAnimation(), 1000)
 }
 
 // Key watchers
