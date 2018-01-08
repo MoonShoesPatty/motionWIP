@@ -33,9 +33,11 @@ const levelWidth = gameWidth * 4; // upper bound for the screen to scroll right
 
 const deathDropSpeed = -10;
 const deathPauseLength = 2000;
+const bulletSpeed = 20;
 
 // scroll distance, used to offset platforms as screen scrolls
 let scrollDistance = 0;
+let bulletDelay = 0;
 
 // User input
 const keys = [];
@@ -159,6 +161,8 @@ const items = [];
 		collected: false
 	});
 
+const projectiles = [];
+
 // Enemies Array
 const enemies = [];
 	// emeny items
@@ -213,6 +217,10 @@ function update() {
 	if (keys[38] || keys[32]) {
 		jump();
 	}
+	// D for SHOOT
+	if (keys[68]) {
+		shoot();
+	}
 	// SHIFT for RUN
 	if (keys[16]) {
 		player.speed = runSpeed;
@@ -250,6 +258,14 @@ function update() {
 			player.score += 100;
 		}
 	});
+	// Draw projectiles
+	projectiles.forEach(bullet => {
+		let collisionDirection;
+		bullet.x += bulletSpeed;
+		ctx.strokeRect(bullet.x + scrollDistance, bullet.y, coinSize, coinSize);
+	})
+	// only allow the player to shoot after time has passed (i.e. no machine guns)
+	bulletDelay--;
 	// Draw enemies
 	ctx.strokeStyle = 'red';
 	enemies.forEach(enemy => {
@@ -334,6 +350,7 @@ function update() {
 		// Run the game!
 		requestAnimationFrame(update);
 	} else {
+		ctx.strokeRect(player.x, player.y, player.width, player.height);
 		player.yVelocity = deathDropSpeed;
 		deathDelay(deathPauseLength);
 	}
@@ -403,6 +420,7 @@ function plusScrollDistance(platform) {
 
 // Handle keypresses
 function handleKeydown(e) {
+	// console.log(e.keyCode)
 	keys[e.keyCode] = true;
 }
 function handleKeyup(e) {
@@ -438,6 +456,17 @@ function jump() {
 	}
 }
 
+// Shoot function - activated by D key
+function shoot() {
+	if (bulletDelay < 0) {
+		projectiles.push({
+			x: player.x + (player.width / 2),
+			y: player.y + (player.height / 2) - (coinSize / 2)
+		})
+		bulletDelay = 30;
+	}
+}
+
 // Bounce player while they walk
 function walkCycle() {
 	
@@ -453,6 +482,13 @@ function resetPlayerShape() {
 // Animate the player dying
 function deathAnimation() {
 	ctx.clearRect(0, 0, gameWidth, gameHeight);
+	// draw enemies
+	ctx.strokeStyle = 'red';
+	enemies.forEach(enemy => {
+		if (enemy.alive) {
+			ctx.strokeRect(enemy.x + scrollDistance, enemy.y, playerSize, playerSize);
+		}
+	})
 	// draw platforms
 	ctx.strokeStyle = 'white';
 	platforms.forEach(platform => {
@@ -468,14 +504,7 @@ function deathAnimation() {
 		if (item.coin && !item.collected) {
 			ctx.strokeRect(item.x + scrollDistance, item.y, coinSize, coinSize);
 		}
-	})
-	// draw enemies
-	ctx.strokeStyle = 'red';
-	enemies.forEach(enemy => {
-		if (enemy.alive) {
-			ctx.strokeRect(enemy.x + scrollDistance, enemy.y, playerSize, playerSize);
-		}
-	})
+	});
 
 	ctx.strokeStyle = '#12B4E9';
 	player.y += player.yVelocity;
@@ -484,8 +513,8 @@ function deathAnimation() {
 	requestAnimationFrame(deathAnimation);
 }
 
-function delay(delayTime) {
-	setTimeout(deathAnimation(), 1000)
+function deathDelay(delayTime) {
+	setTimeout(deathAnimation, delayTime)
 }
 
 // Key watchers
