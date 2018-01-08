@@ -32,12 +32,13 @@ const levelWidth = gameWidth * 4; // upper bound for the screen to scroll right
 // measured from leftmost bound - so (* 4) makes a playable area of FIVE gameWidths long
 
 const deathDropSpeed = -10;
-const deathPauseLength = 2000;
+const deathPauseLength = 800;
 const bulletSpeed = 20;
 
 // scroll distance, used to offset platforms as screen scrolls
 let scrollDistance = 0;
 let bulletDelay = 0;
+let gravityDirection = 1;
 
 // User input
 const keys = [];
@@ -72,6 +73,13 @@ const platforms = [];
 		y: 0,
 		width: 1,
 		height: gameHeight,
+		bound: true
+	});
+	platforms.push({
+		x: 0,
+		y: -49,
+		width: gameWidth,
+		height: 50,
 		bound: true
 	});
 
@@ -142,6 +150,25 @@ const platforms = [];
 // Items array
 const items = [];
 	// coin items
+	items.push({
+		x: 1972.5,
+		y: 400,
+		coin: true,
+		collected: false
+	});
+	items.push({
+		x: 2172.5,
+		y: 300,
+		coin: true,
+		collected: false
+	});
+	items.push({
+		x: 2372.5,
+		y: 200,
+		coin: true,
+		collected: false
+	});
+
 	items.push({
 		x: 172.5,
 		y: 400,
@@ -221,6 +248,10 @@ function update() {
 	if (keys[68]) {
 		shoot();
 	}
+	// S switches gravity
+	if (keys[83]) {
+		gravityDirection *= -1;
+	}
 	// SHIFT for RUN
 	if (keys[16]) {
 		player.speed = runSpeed;
@@ -234,7 +265,7 @@ function update() {
 	if (player.grounded && !(keys[39] || keys[37])) {
 		player.xVelocity *= friction;
 	}
-	player.yVelocity += gravity;
+	player.yVelocity += (gravity * gravityDirection);
 
 	// Clear before drawing
 	ctx.clearRect(0, 0, gameWidth, gameHeight);
@@ -346,6 +377,9 @@ function update() {
 	ctx.strokeStyle = '#12B4E9';
 	if (player.alive) {
 		ctx.strokeRect(player.x, player.y, player.width, player.height);
+		if (player.score >= 200) {
+			drawHat();
+		}
 
 		// Run the game!
 		requestAnimationFrame(update);
@@ -420,7 +454,7 @@ function plusScrollDistance(platform) {
 
 // Handle keypresses
 function handleKeydown(e) {
-	// console.log(e.keyCode)
+	console.log(e.keyCode)
 	keys[e.keyCode] = true;
 }
 function handleKeyup(e) {
@@ -460,11 +494,18 @@ function jump() {
 function shoot() {
 	if (bulletDelay < 0) {
 		projectiles.push({
-			x: player.x + (player.width / 2),
+			x: player.x + (player.width / 2) - scrollDistance,
 			y: player.y + (player.height / 2) - (coinSize / 2)
 		})
 		bulletDelay = 30;
 	}
+}
+
+// Hat function - draw hat after player collects 5 coins
+function drawHat() {
+	ctx.strokeStyle = 'yellow';
+	ctx.strokeRect(player.x, player.y, player.width, player.height/3);
+	ctx.strokeRect(player.x - 5, player.y + (player.height / 3), player.width + 10, 0);
 }
 
 // Bounce player while they walk
@@ -514,7 +555,7 @@ function deathAnimation() {
 }
 
 function deathDelay(delayTime) {
-	setTimeout(deathAnimation, delayTime)
+	setTimeout(deathAnimation, delayTime);
 }
 
 // Key watchers
