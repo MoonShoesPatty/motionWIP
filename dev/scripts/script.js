@@ -270,6 +270,11 @@ function update() {
 	// Clear before drawing
 	ctx.clearRect(0, 0, gameWidth, gameHeight);
 
+	// Titles
+	ctx.font = "4rem 'Press Start 2P'";
+	ctx.textAlign = "center";
+	ctx.strokeText("Game???", canvas.width / 2, 100);
+
 	// Draw objects in world
 	ctx.strokeStyle = 'yellow';
 	ctx.lineWidth = 2;
