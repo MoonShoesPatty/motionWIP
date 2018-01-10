@@ -9,22 +9,24 @@ const canvas = document.getElementById('gameScreen');
 const ctx = canvas.getContext('2d');
 
 // Game size
-const gameWidth = 853;
-const gameHeight = 480;
+const gameWidth = window.innerWidth - 40;
+const gameHeight = window.innerHeight - 40;
 
 // Set up canvas
 canvas.width = gameWidth;
 canvas.height = gameHeight;
+canvas.style.top = '20px';
+canvas.style.left = '20px';
 
 // General game variables
-const playerSize = 30;
+const playerSize = 40;
 const friction = 0.5;
 const gravity = 0.7;
 const floatLength = 20; //time that user can hold to jump higher - higher the number, higher user can jump
-const runSpeed = 9;
+const runSpeed = 10;
 const walkSpeed = 5;
-const coinSize = 10;
-const scrollBound = 100; //distance before the edge of the screen where level scroll function begins
+const coinSize = 15;
+const scrollBound = 200; //distance before the edge of the screen where level scroll function begins
 const levelWidth = gameWidth * 4; // upper bound for the screen to scroll right
 // measured in 'gameWidth' units (i.e. this level is 5 gameWidths long)
 // measured from leftmost bound - so (* 4) makes a playable area of FIVE gameWidths long
@@ -38,89 +40,176 @@ let scrollDistance = 0;
 let bulletDelay = 0;
 let gravityDirection = 1;
 let gravSwitch = 0;
-let gameText = "1: Platforming"
 
 // User input
 const keys = [];
 
+// Platforms Array structure:
+	// MANDATORY
+	//  x: x position of left side of platform. 
+	//
+	//
+	//
+	// OPTIONAL PROPERTIES
+
 // Platforms Array
-const platforms = [
-	// GAME BOUNDS
-	{ // top bound
+const platforms = [];
+	// Add canvas bounds
+	platforms.push({
 		x: 0,
-		y: -49,
-		width: gameWidth,
-		height: 50,
+		y: 0,
+		width: 1,
+		height: gameHeight,
 		bound: true
-	},
-	{ // bottom bound
+	});
+	platforms.push({
 		x: 0,
 		y: gameHeight - 1,
 		width: gameWidth,
 		height: 50,
 		bound: true
-	},
-	{ // left bound
+	});
+	platforms.push({
 		x: gameWidth - 1,
 		y: 0,
 		width: 1,
 		height: gameHeight,
 		bound: true
-	},
-	{ // right bound
-		x: 0,
-		y: 0,
-		width: 1,
-		height: gameHeight,
-		bound: true
-	}
-];
-
-// IN-GAME PLATFORMS - format: {x, y, width, height}
-// x: percentage of gameWidth (0 is left, 1 is right, 2 is 2x game width, etc)
-// y: percentage of gameHeight (0 is top, 1 is bottom)
-// width: percentage of gameWidth (0 is no width, 1 spans full screen width)
-// height: percentage of gameHeight (0 is no height, 1 spans full screen height)
-
-const tutorialPlatforms = [
-	{
-		x: 0,
-		y: 0.6,
-		width: 0.2,
-		height: 0.4
-	},
-	{
-		x: 0.9,
-		y: 0.2,
-		width: 0.1,
-		height: 0.8
-	},
-	{
-		x: 0.4,
-		y: 0.5,
-		width: 0.2,
-		height: 0.03
-	},
-]
-
-tutorialPlatforms.forEach(platform => {
+	});
 	platforms.push({
-		x: platform.x * gameWidth,
-		y: platform.y * gameHeight,
-		width: platform.width * gameWidth,
-		height: platform.height * gameHeight,
-	})
-})
+		x: 0,
+		y: -49,
+		width: gameWidth,
+		height: 50,
+		bound: true
+	});
+
+	// Add in-game platforms
+	platforms.push({
+		x: 120,
+		y: 500,
+		width: 120,
+		height: 20
+	});
+	platforms.push({
+		x: 320,
+		y: 400,
+		width: 120,
+		height: 20
+	});
+	platforms.push({
+		x: 520,
+		y: 300,
+		width: 120,
+		height: 20
+	});
+
+	platforms.push({
+		x: 1920,
+		y: 500,
+		width: 120,
+		height: 20
+	});
+	platforms.push({
+		x: 2120,
+		y: 400,
+		width: 120,
+		height: 20
+	});
+	platforms.push({
+		x: 2320,
+		y: 300,
+		width: 120,
+		height: 20
+	});
+
+	platforms.push({
+		x: gameWidth,
+		y: 0,
+		width: 2,
+		height: 20
+	});
+	platforms.push({
+		x: gameWidth * 2,
+		y: 0,
+		width: 2,
+		height: 20
+	});
+	platforms.push({
+		x: gameWidth * 3,
+		y: 0,
+		width: 2,
+		height: 20
+	});
+	platforms.push({
+		x: gameWidth * 4,
+		y: 0,
+		width: 2,
+		height: 20
+	});
 
 // Items array
 const items = [];
 	// coin items
+	items.push({
+		x: 1972.5,
+		y: 400,
+		coin: true,
+		collected: false
+	});
+	items.push({
+		x: 2172.5,
+		y: 300,
+		coin: true,
+		collected: false
+	});
+	items.push({
+		x: 2372.5,
+		y: 200,
+		coin: true,
+		collected: false
+	});
+
+	items.push({
+		x: 172.5,
+		y: 400,
+		jumpCoin: true,
+		collected: false
+	});
+	items.push({
+		x: 372.5,
+		y: 300,
+		jumpCoin: true,
+		collected: false
+	});
+	items.push({
+		x: 572.5,
+		y: 200,
+		jumpCoin: true,
+		collected: false
+	});
 
 const projectiles = [];
 
 // Enemies Array
 const enemies = [];
 	// emeny items
+	enemies.push({
+		x: gameWidth * 1.5,
+		y: gameHeight - playerSize,
+		width: playerSize,
+		height: playerSize,
+		speed: 3,
+		alive: true
+	})
+	enemies.push({
+		x: gameWidth * 1.6,
+		y: gameHeight - playerSize,
+		width: playerSize,
+		height: playerSize,
+		speed: 3,
+		alive: true
+	})
 
 // Player object
 const player = {
@@ -186,9 +275,9 @@ function update() {
 	ctx.clearRect(0, 0, gameWidth, gameHeight);
 
 	// Titles
-	ctx.font = "3rem 'Press Start 2P'";
+	ctx.font = "4rem 'Press Start 2P'";
 	ctx.textAlign = "center";
-	ctx.strokeText(gameText, canvas.width / 2, 100);
+	ctx.strokeText("Game???", canvas.width / 2, 100);
 
 	// Draw objects in world
 	ctx.lineWidth = 2;
@@ -250,7 +339,7 @@ function update() {
 			platform.height);
 		let collisionDirection = collisionCheck(player, platform);
 		
-		if ((collisionDirection === "l" && !keys[39]) || (collisionDirection === "r" && !keys[37])) {
+		if (collisionDirection === "l" || collisionDirection === "r") {
 			player.xVelocity = 0;
 			player.jumping = false;
 		} else if ((collisionDirection === "b") && (gravityDirection > 0) ||
@@ -261,7 +350,7 @@ function update() {
 			       (collisionDirection === "b") && (gravityDirection < 0)) {
 			player.yVelocity *= -0.2;
 		}
-    })
+	})
 
 	// counteract gravity while player's feet are on the ground
 	if (player.grounded) {
