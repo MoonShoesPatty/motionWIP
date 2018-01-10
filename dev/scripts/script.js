@@ -39,6 +39,7 @@ const bulletSpeed = 20;
 let scrollDistance = 0;
 let bulletDelay = 0;
 let gravityDirection = 1;
+let gravSwitch = 0;
 
 // User input
 const keys = [];
@@ -172,19 +173,19 @@ const items = [];
 	items.push({
 		x: 172.5,
 		y: 400,
-		coin: true,
+		jumpCoin: true,
 		collected: false
 	});
 	items.push({
 		x: 372.5,
 		y: 300,
-		coin: true,
+		jumpCoin: true,
 		collected: false
 	});
 	items.push({
 		x: 572.5,
 		y: 200,
-		coin: true,
+		jumpCoin: true,
 		collected: false
 	});
 
@@ -225,7 +226,8 @@ const player = {
 	canExtendJump: floatLength,
 	grounded: false,
 	score: 0,
-	alive: true
+	alive: true,
+	doubleJumps: 0
 }
 
 // Redraw game
@@ -249,9 +251,11 @@ function update() {
 		shoot();
 	}
 	// S switches gravity
-	if (keys[83]) {
+	if (keys[83] && gravSwitch < 0) {
 		gravityDirection *= -1;
+		gravSwitch = 40;
 	}
+	gravSwitch--;
 	// SHIFT for RUN
 	if (keys[16]) {
 		player.speed = runSpeed;
@@ -276,7 +280,6 @@ function update() {
 	ctx.strokeText("Game???", canvas.width / 2, 100);
 
 	// Draw objects in world
-	ctx.strokeStyle = 'yellow';
 	ctx.lineWidth = 2;
 	ctx.beginPath();
 
@@ -285,13 +288,20 @@ function update() {
 	items.forEach(item => {
 		let collisionDirection;
 		if (item.coin && !item.collected) {
+			ctx.strokeStyle = 'yellow';			
 			ctx.strokeRect(item.x + scrollDistance,	item.y,	coinSize, coinSize);
+			if (coinCheck(player, item)) {
+				item.collected = true;				
+				player.score += 100;
+			}
+		} else if (item.jumpCoin && !item.collected) {
+			ctx.strokeStyle = 'blue';
+			ctx.strokeRect(item.x + scrollDistance, item.y, coinSize, coinSize);
 			collisionDirection = coinCheck(player, item);
-		}
-		// console.log(collisionDirection);
-		if (collisionDirection) {
-			item.collected = true;
-			player.score += 100;
+			if (coinCheck(player, item)) {
+				item.collected = true;
+				player.doubleJumps += 1;
+			}
 		}
 	});
 	// Draw projectiles
@@ -336,7 +346,11 @@ function update() {
 			player.grounded = true;
 			player.jumping = false;
 		} else if (collisionDirection === "t") {
-			player.yVelocity *= -0.2;
+			if (gravityDirection > 0) {
+				player.yVelocity *= -0.2;
+			} else {
+				player.grounded = true;
+			}
 		}
 	})
 
@@ -459,7 +473,6 @@ function plusScrollDistance(platform) {
 
 // Handle keypresses
 function handleKeydown(e) {
-	console.log(e.keyCode)
 	keys[e.keyCode] = true;
 }
 function handleKeyup(e) {
@@ -488,11 +501,15 @@ function jump() {
 	if (!player.jumping && player.grounded) {
 		player.jumping = true;
 		player.grounded = false;
-		player.yVelocity = -player.jumpSpeed;
+		player.yVelocity = -(player.jumpSpeed * gravityDirection);
 	} else if (player.canExtendJump > 0 && (keys[38] || keys[32])) {
 		// Allow player to extend jump if soon enough after jump AND they are holding jump key
-		player.yVelocity -= gravity / 1.7;
-	}
+		player.yVelocity -= (gravity * gravityDirection) / 1.7;
+	} 
+	// else if (player.jumping && player.doubleJumps > 0) {
+	// 	player.doubleJumps -= 1;
+	// 	player.yVelocity = -player.jumpSpeed;
+	// }
 }
 
 // Shoot function - activated by D key
@@ -509,7 +526,7 @@ function shoot() {
 // Hat function - draw hat after player collects 5 coins
 function drawHat() {
 	ctx.strokeStyle = 'yellow';
-	ctx.strokeRect(player.x, player.y, player.width, player.height/3);
+	ctx.strokeRect(player.x, player.y, player.width, player.height / 3);
 	ctx.strokeRect(player.x - 5, player.y + (player.height / 3), player.width + 10, 0);
 }
 
