@@ -105,22 +105,32 @@ const tutorialPlatforms = [
 
 tutorialPlatforms.forEach(platform => {
 	platforms.push({
-		x: platform.x * gameWidth,
-		y: platform.y * gameHeight,
-		width: platform.width * gameWidth,
-		height: platform.height * gameHeight,
+		x: Math.floor(platform.x * gameWidth),
+		y: Math.floor(platform.y * gameHeight),
+		width: Math.floor(platform.width * gameWidth),
+		height: Math.floor(platform.height * gameHeight),
 	})
 })
 
 // Items array
 const items = [];
-	// coin items
+// coin items
 
 const projectiles = [];
 
 // Enemies Array
-const enemies = [];
-	// emeny items
+// const enemies = [];
+// emeny items
+const tutorialEnemies = [{
+	x: gameWidth * 1.5,
+	y: gameHeight - playerSize,
+	width: playerSize,
+	height: playerSize,
+	speed: 3,
+	alive: true
+}]
+
+const enemies = [...tutorialEnemies]
 
 // Player object
 const player = {
@@ -199,10 +209,10 @@ function update() {
 	items.forEach(item => {
 		let collisionDirection;
 		if (item.coin && !item.collected) {
-			ctx.strokeStyle = 'yellow';			
-			ctx.strokeRect(item.x + scrollDistance,	item.y,	coinSize, coinSize);
+			ctx.strokeStyle = 'yellow';
+			ctx.strokeRect(item.x + scrollDistance, item.y, coinSize, coinSize);
 			if (coinCheck(player, item)) {
-				item.collected = true;				
+				item.collected = true;
 				player.score += 100;
 			}
 		} else if (item.jumpCoin && !item.collected) {
@@ -227,13 +237,26 @@ function update() {
 	ctx.strokeStyle = 'red';
 	enemies.forEach(enemy => {
 		let collisionDirection;
+		let enemyWallDirection;
 		if (enemy.alive) {
 			ctx.strokeRect(enemy.x + scrollDistance, enemy.y, playerSize, playerSize);
 			enemy.x -= enemy.speed;
 			collisionDirection = collisionCheck(player, enemy);
+			platforms.forEach(platform => {
+				enemyWallDirection = collisionCheck(enemy, platform);
+				if (enemyWallDirection === "l" || enemyWallDirection === "r") {
+					enemy.speed *= -1;
+				}
+			})
 		}
 		if (collisionDirection === "l" || collisionDirection === "r" || collisionDirection === "t") {
-			player.alive = false;
+			if (player.yVelocity < 2) {
+				player.alive = false;
+			} else {
+				player.yVelocity = -player.yVelocity * 0.5;
+				enemy.speed = 0;
+				enemy.alive = false;
+			}
 		} else if (collisionDirection === "b") {
 			player.yVelocity = -player.yVelocity * 0.5;
 			enemy.speed = 0;
@@ -241,27 +264,34 @@ function update() {
 		}
 	})
 	// Draw platforms
-	ctx.strokeStyle = 'white';	
+	ctx.strokeStyle = 'white';
 	platforms.forEach(platform => {
 		ctx.strokeRect(
 			(platform.bound) ? platform.x : platform.x + scrollDistance,
-			platform.y, 
-			platform.width, 
+			platform.y,
+			platform.width,
 			platform.height);
 		let collisionDirection = collisionCheck(player, platform);
-		
+
 		if ((collisionDirection === "l" && !keys[39]) || (collisionDirection === "r" && !keys[37])) {
 			player.xVelocity = 0;
 			player.jumping = false;
-		} else if ((collisionDirection === "b") && (gravityDirection > 0) ||
-		           (collisionDirection === "t") && (gravityDirection < 0)) {
-			player.grounded = true;
-			player.jumping = false;
-		} else if ((collisionDirection === "t") && (gravityDirection > 0) ||
-			       (collisionDirection === "b") && (gravityDirection < 0)) {
-			player.yVelocity *= -0.2;
+		} else if (collisionDirection === "b") {
+			if (gravityDirection > 0) {
+				player.grounded = true;
+				player.jumping = false;
+			} else {
+				player.yVelocity *= -0.2;
+			}
+		} else if (collisionDirection === "t") {
+			if (gravityDirection < 0) {
+				player.grounded = true;
+				player.jumping = false;
+			} else {
+				player.yVelocity *= -0.2;
+			}
 		}
-    })
+	})
 
 	// counteract gravity while player's feet are on the ground
 	if (player.grounded) {
@@ -275,7 +305,7 @@ function update() {
 	// If the player is within the 'playable' area - before scroll bounds on either side
 	if ((player.x > scrollBound) && (player.x < (gameWidth - (scrollBound * 2)))) {
 		player.x += player.xVelocity;
-	} 
+	}
 	// Else, the player is pushing the screen on the RIGHT bound
 	else if (player.x >= (gameWidth - (scrollBound * 2))) {
 		// Push the screen RIGHT if that's the direction player is walking
@@ -286,7 +316,7 @@ function update() {
 		else {
 			player.x += player.xVelocity;
 		}
-	} 
+	}
 	// Else, the player is pushing the LEFT bound
 	else if (player.x <= scrollBound) {
 		// Push the screen LEFT if that's the direction player is walking
@@ -308,7 +338,6 @@ function update() {
 		if (player.score >= 200) {
 			drawHat();
 		}
-
 		// Run the game!
 		requestAnimationFrame(update);
 	} else {
@@ -350,8 +379,8 @@ function collisionCheck(shapeA, shapeB) {
 	// if the x and y vector are less than the half width or half height, they we must be inside the object, causing a collision
 	if (Math.abs(vX) < hWidths && Math.abs(vY) < hHeights) {
 		// figures out on which side we are colliding (top, bottom, left, or right)         
-		const oX = hWidths - Math.abs(vX);            
-		const oY = hHeights - Math.abs(vY);         
+		const oX = hWidths - Math.abs(vX);
+		const oY = hHeights - Math.abs(vY);
 		if (oX >= oY) {
 			if (vY > 0) {
 				colDir = "t";
@@ -414,7 +443,7 @@ function jump() {
 	} else if (player.canExtendJump > 0 && (keys[38] || keys[32])) {
 		// Allow player to extend jump if soon enough after jump AND they are holding jump key
 		player.yVelocity -= (gravity * gravityDirection) / 1.7;
-	} 
+	}
 	// else if (player.jumping && player.doubleJumps > 0) {
 	// 	player.doubleJumps -= 1;
 	// 	player.yVelocity = -player.jumpSpeed;
@@ -441,7 +470,7 @@ function drawHat() {
 
 // Bounce player while they walk
 function walkCycle() {
-	
+
 }
 // Squish player when they land on the ground after falling
 function hitGround() {
