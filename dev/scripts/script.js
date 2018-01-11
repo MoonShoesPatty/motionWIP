@@ -14,7 +14,7 @@ const gameHeight = 480;
 
 // Set up canvas
 canvas.width = gameWidth;
-canvas.height = gameHeight;
+canvas.height = gameHeight + 200;
 
 // General game variables
 const playerSize = 30;
@@ -54,23 +54,23 @@ const platforms = [
 		bound: true
 	},
 	{ // bottom bound
-		x: 0,
+		x: -5,
 		y: gameHeight - 1,
-		width: gameWidth,
-		height: 50,
+		width: gameWidth + 10,
+		height: 205,
 		bound: true
 	},
 	{ // left bound
 		x: gameWidth - 1,
 		y: 0,
-		width: 1,
+		width: 50,
 		height: gameHeight,
 		bound: true
 	},
 	{ // right bound
-		x: 0,
+		x: -49,
 		y: 0,
-		width: 1,
+		width: 50,
 		height: gameHeight,
 		bound: true
 	}
@@ -83,24 +83,73 @@ const platforms = [
 // height: percentage of gameHeight (0 is no height, 1 spans full screen height)
 
 const tutorialPlatforms = [
+	// PART 1
 	{
-		x: 0,
-		y: 0.6,
-		width: 0.2,
-		height: 0.4
+		x: 0.6,
+		y: 0.75,
+		width: 0.18,
+		height: 0.03
 	},
 	{
 		x: 0.9,
-		y: 0.2,
-		width: 0.1,
-		height: 0.8
-	},
-	{
-		x: 0.4,
 		y: 0.5,
 		width: 0.2,
+		height: 0.51
+	},
+	{
+		x: 1.25,
+		y: 0.75,
+		width: 0.15,
 		height: 0.03
 	},
+	{
+		x: 1.45,
+		y: 0.5,
+		width: 0.15,
+		height: 0.03
+	},
+	{
+		x: 1.65,
+		y: 0.25,
+		width: 0.15,
+		height: 0.03
+	},
+	{
+		x: 1.9,
+		y: 0.25,
+		width: 1.1,
+		height: 0.76
+	},
+	// PART 2
+	{
+		x: 3.9,
+		y: 0.75,
+		width: 0.2,
+		height: 0.26
+	},
+	{
+		x: 4.28,
+		y: 0.5,
+		width: 0.15,
+		height: 0.03
+	},
+	{
+		x: 4.6,
+		y: 0.5,
+		width: 0.15,
+		height: 0.03
+	},
+	{
+		x: 4.9,
+		y: 0.25,
+		width: 1.1,
+		height: 0.76
+	},
+	// PART 3
+
+	// PART 4
+
+	// PART 5
 ]
 
 tutorialPlatforms.forEach(platform => {
@@ -121,26 +170,52 @@ const projectiles = [];
 // Enemies Array
 // const enemies = [];
 // emeny items
-const tutorialEnemies = [{
-	x: gameWidth * 1.5,
-	y: gameHeight - playerSize,
-	width: playerSize,
-	height: playerSize,
-	speed: 3,
-	alive: true
-}]
+const tutorialEnemies = [
+	{
+		x: gameWidth * 3.5,
+		y: gameHeight - playerSize,
+		width: playerSize,
+		height: playerSize,
+		speed: 3,
+		alive: true
+	},
+	{
+		x: gameWidth * 4.2,
+		y: gameHeight - playerSize,
+		width: playerSize,
+		height: playerSize,
+		speed: 3,
+		alive: true
+	},
+	{
+		x: gameWidth * 4.5,
+		y: gameHeight - playerSize,
+		width: playerSize,
+		height: playerSize,
+		speed: 3,
+		alive: true
+	},
+	{
+		x: gameWidth * 4.8,
+		y: gameHeight - playerSize,
+		width: playerSize,
+		height: playerSize,
+		speed: 3,
+		alive: true
+	},
+]
 
 const enemies = [...tutorialEnemies]
 
 // Player object
 const player = {
-	x: gameWidth / 2.2,
+	x: 150,
 	y: gameHeight - playerSize,
 	width: playerSize,
 	height: playerSize,
 	speed: walkSpeed,
 	acceleration: 0.8,
-	jumpSpeed: 15,
+	jumpSpeed: 12,
 	xVelocity: 0,
 	yVelocity: 0,
 	jumping: false,
@@ -194,11 +269,6 @@ function update() {
 
 	// Clear before drawing
 	ctx.clearRect(0, 0, gameWidth, gameHeight);
-
-	// Titles
-	ctx.font = "3rem 'Press Start 2P'";
-	ctx.textAlign = "center";
-	ctx.strokeText(gameText, canvas.width / 2, 100);
 
 	// Draw objects in world
 	ctx.lineWidth = 2;
@@ -256,11 +326,13 @@ function update() {
 				player.yVelocity = -player.yVelocity * 0.5;
 				enemy.speed = 0;
 				enemy.alive = false;
+				player.score += 200;
 			}
 		} else if (collisionDirection === "b") {
 			player.yVelocity = -player.yVelocity * 0.5;
 			enemy.speed = 0;
 			enemy.alive = false;
+			player.score += 200;
 		}
 	})
 	// Draw platforms
@@ -335,9 +407,7 @@ function update() {
 	ctx.strokeStyle = '#12B4E9';
 	if (player.alive) {
 		ctx.strokeRect(player.x, player.y, player.width, player.height);
-		if (player.score >= 200) {
-			drawHat();
-		}
+
 		// Run the game!
 		requestAnimationFrame(update);
 	} else {
@@ -345,6 +415,25 @@ function update() {
 		player.yVelocity = deathDropSpeed;
 		deathDelay(deathPauseLength);
 	}
+
+	// Score text & level titles below game screen
+	bottomText();
+}
+
+// Draw score, level title etc.
+function bottomText() {
+	// Clear last & set color
+	ctx.clearRect(0, gameHeight, gameWidth, 300);
+	ctx.strokeStyle = '#12B4E9';
+	ctx.font = "24px 'Press Start 2P'";
+
+	// Level title
+	ctx.textAlign = 'left';
+	ctx.strokeText(gameText, 10, gameHeight + 50);
+
+	// Score
+	ctx.textAlign = 'right';
+	ctx.strokeText(player.score, gameWidth - 10, gameHeight + 50);	
 }
 
 // Collision check - coins - credit to http://www.somethinghitme.com
