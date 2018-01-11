@@ -25,7 +25,7 @@ const runSpeed = 9;
 const walkSpeed = 5;
 const coinSize = 10;
 const scrollBound = 100; //distance before the edge of the screen where level scroll function begins
-const levelWidth = gameWidth * 4; // upper bound for the screen to scroll right
+const levelWidth = gameWidth * 12; // upper bound for the screen to scroll right
 // measured in 'gameWidth' units (i.e. this level is 5 gameWidths long)
 // measured from leftmost bound - so (* 4) makes a playable area of FIVE gameWidths long
 
@@ -313,7 +313,7 @@ function update() {
 			enemy.x -= enemy.speed;
 			collisionDirection = collisionCheck(player, enemy);
 			platforms.forEach(platform => {
-				enemyWallDirection = collisionCheck(enemy, platform);
+				enemyWallDirection = enemyCollision(enemy, platform);
 				if (enemyWallDirection === "l" || enemyWallDirection === "r") {
 					enemy.speed *= -1;
 				}
@@ -452,6 +452,42 @@ function coinCheck(player, coin) {
 		collision = true;
 	}
 	return collision;
+}
+
+function enemyCollision(shapeA, shapeB) {
+	// get the vectors to check against
+	const vX = (shapeA.x + (shapeA.width / 2)) - (shapeB.x + (shapeB.width / 2));
+	const vY = (shapeA.y + (shapeA.height / 2)) - (shapeB.y + (shapeB.height / 2));
+	// add the half widths and half heights of the objects
+	const hWidths = (shapeA.width / 2) + (shapeB.width / 2);
+	const hHeights = (shapeA.height / 2) + (shapeB.height / 2);
+	// return value - which direction are we colliding?
+	let colDir = null;
+
+	// if the x and y vector are less than the half width or half height, they we must be inside the object, causing a collision
+	if (Math.abs(vX) < hWidths && Math.abs(vY) < hHeights) {
+		// figures out on which side we are colliding (top, bottom, left, or right)         
+		const oX = hWidths - Math.abs(vX);
+		const oY = hHeights - Math.abs(vY);
+		if (oX >= oY) {
+			if (vY > 0) {
+				colDir = "t";
+				shapeA.y += oY;
+			} else if (vY < 0) {
+				colDir = "b";
+				shapeA.y -= oY;
+			}
+		} else {
+			if (vX > 0) {
+				colDir = "l";
+				shapeA.x += oX;
+			} else {
+				colDir = "r";
+				shapeA.x -= oX;
+			}
+		}
+	}
+	return colDir;
 }
 
 // Collision check - platforms - credit to http://www.somethinghitme.com
