@@ -34,7 +34,7 @@ const deathPauseLength = 800;
 const bulletSpeed = 20;
 
 // scroll distance, used to offset platforms as screen scrolls
-let scrollDistance = -4800;
+let scrollDistance = 0;
 let bulletDelay = 0;
 let gravityDirection = 1;
 let gravSwitch = 0;
@@ -481,7 +481,45 @@ const player = {
 	grounded: false,
 	score: 0,
 	alive: true,
-	doubleJumps: 0
+	doubleJumps: 0,
+	prevPosition: [
+		{
+			x: 0,
+			y: 0
+		},
+		{
+			x: 0,
+			y: 0
+		},
+		{
+			x: 0,
+			y: 0
+		},
+		{
+			x: 0,
+			y: 0
+		},
+		{
+			x: 0,
+			y: 0
+		},
+		{
+			x: 0,
+			y: 0
+		},
+		{
+			x: 0,
+			y: 0
+		},
+		{
+			x: 0,
+			y: 0
+		},
+		{
+			x: 0,
+			y: 0
+		},
+	]
 }
 
 // Redraw game
@@ -603,12 +641,11 @@ function update() {
 				Math.PI * (7/4));
 		ctx.stroke();
 
-
 		// Floaty waves
 		if (button.floatWave >= button.floatHeight) {
 			button.floatWave = 0;
 		} else {
-			button.floatWave += 0.2;
+			button.floatWave += 0.25;
 		}
 
 		// Draw the floaty waves
@@ -623,8 +660,8 @@ function update() {
 
 		ctx.beginPath();
 		const secondFloat = button.floatWave >= (button.floatHeight / 2) 
-							? button.floatWave - (button.floatHeight / 2)
-							: button.floatWave + (button.floatHeight / 2);
+			? button.floatWave - (button.floatHeight / 2)
+			: button.floatWave + (button.floatHeight / 2);
 
 		ctx.globalAlpha = 1 - (secondFloat / button.floatHeight);
 		ctx.arc(button.x + scrollDistance + (button.width / 2),
@@ -721,6 +758,7 @@ function update() {
 	ctx.strokeStyle = '#12B4E9';
 	if (player.alive) {
 		ctx.strokeRect(player.x, player.y, player.width, player.height);
+		drawPrevFrames();
 
 		// Run the game!
 		requestAnimationFrame(update);
@@ -732,6 +770,31 @@ function update() {
 
 	// Score text & level titles below game screen
 	bottomText();
+}
+
+function drawPrevFrames() {;
+	for (let i = player.prevPosition.length - 1; i >= 0; i--) {
+		ctx.globalAlpha = (0.3 / i) + 0.1;
+		if (i % 3 === 2) {
+			//if (keys[16] || player.jumping) {
+				ctx.strokeRect(player.prevPosition[i].x, player.prevPosition[i].y, player.width, player.height);
+			//}
+		}
+		if (i > 0) {
+			player.prevPosition[i].x = player.prevPosition[i - 1].x;
+			player.prevPosition[i].y = player.prevPosition[i - 1].y;
+		} else if ((player.x > scrollBound) && (player.x < (gameWidth / 2))) {
+			player.prevPosition[i].x = player.x;
+			player.prevPosition[i].y = player.y;
+		} else {
+			player.prevPosition[i].x = player.x - (player.xVelocity * (i + 1));
+			player.prevPosition[i].y = player.y;
+			for (let i = player.prevPosition.length - 1; i >= 0; i--) {
+				player.prevPosition[i].x = player.x - (player.xVelocity * (i + 1));
+			}
+		}
+	}
+	ctx.globalAlpha = 1;
 }
 
 // Draw score, level title etc.
