@@ -34,7 +34,7 @@ const deathPauseLength = 800;
 const bulletSpeed = 20;
 
 // scroll distance, used to offset platforms as screen scrolls
-let scrollDistance = 0;
+let scrollDistance = -(8.8 * gameWidth);
 let bulletDelay = 0;
 let gravityDirection = 1;
 let gravSwitch = 0;
@@ -164,13 +164,96 @@ const tutorialPlatforms = [
 		height: 0.03
 	},
 	{
+		x: 7.75,
+		y: 0.725,
+		width: 0.15,
+		height: 0.03
+	},
+	{
+		x: 7.617,
+		y: 0.5,
+		width: 0.133,
+		height: 0.03
+	},
+	{
 		x: 7.9,
 		y: 0.25,
 		width: 1.1,
 		height: 0.76
 	},
 	// PART 4
-
+	{
+		x: 9.217,
+		y: 0.725,
+		width: 0.5,
+		height: 0.03
+	},
+	{
+		x: 9.2,
+		y: 0.725,
+		width: 0.017,
+		height: 0.276
+	},
+	{
+		x: 9.87,
+		y: 0.5,
+		width: 0.017,
+		height: 0.51
+	},
+	{
+		x: 10.3,
+		y: 0.25,
+		width: 0.017,
+		height: 0.76
+	},
+	{
+		x: 9.887,
+		y: 0.725,
+		width: 0.2,
+		height: 0.03
+	},
+	{
+		x: 10.1,
+		y: 0.5,
+		width: 0.2,
+		height: 0.03
+	},
+	{
+		x: 10.51,
+		y: 0.5,
+		width: 0.2,
+		height: 0.03
+	},
+	{
+		x: 10.317,
+		y: 0.25,
+		width: 0.2,
+		height: 0.03
+	},
+	{
+		x: 10.317,
+		y: 0.725,
+		width: 0.2,
+		height: 0.03
+	},
+	{
+		x: 10.7,
+		y: 0.725,
+		width: 0.2,
+		height: 0.03
+	},
+	{
+		x: 10.7,
+		y: 0.25,
+		width: 0.2,
+		height: 0.03
+	},
+	{
+		x: 10.9,
+		y: 0.25,
+		width: 1.1,
+		height: 0.76
+	},
 	// PART 5
 ]
 
@@ -191,15 +274,43 @@ const tutorialGrav = [
 		width: 0.08 * gameWidth,
 		height: 0.02 * gameHeight,
 		floatWave: 0,
-		floatHeight: 50
+		floatHeight: 50,
+		direction: 1
+	},
+	{
+		x: 10.57 * gameWidth,
+		y: 0.98 * gameHeight,
+		width: 0.08 * gameWidth,
+		height: 0.02 * gameHeight,
+		floatWave: 0,
+		floatHeight: 50,
+		direction: 1
+	},
+	{
+		x: 9.5 * gameWidth,
+		y: 0.5,
+		width: 0.08 * gameWidth,
+		height: 0.02 * gameHeight,
+		floatWave: 0,
+		floatHeight: 50,
+		direction: -1
 	},
 ]
 
 const gravityButtons = [...tutorialGrav]
 
 // Items array
-const items = [];
-// coin items
+const tutorialItems = [
+	{
+		x: gameWidth * 10,
+		y: gameHeight * 0.5,
+		width: coinSize,
+		height: coinSize,
+		keyCoin: true,
+		collected: false
+	},
+]
+const items = [...tutorialItems];
 
 const projectiles = [];
 
@@ -482,6 +593,7 @@ const player = {
 	score: 0,
 	alive: true,
 	doubleJumps: 0,
+	keys: 0,
 	prevPosition: [
 		{
 			x: 0,
@@ -573,12 +685,13 @@ function update() {
 	// Draw coins
 	items.forEach(item => {
 		let collisionDirection;
-		if (item.coin && !item.collected) {
+		if (item.keyCoin && !item.collected) {
 			ctx.strokeStyle = 'yellow';
 			ctx.strokeRect(item.x + scrollDistance, item.y, coinSize, coinSize);
 			if (coinCheck(player, item)) {
 				item.collected = true;
 				player.score += 100;
+				player.keys += 1;
 			}
 		} else if (item.jumpCoin && !item.collected) {
 			ctx.strokeStyle = 'blue';
@@ -633,43 +746,84 @@ function update() {
 	// Gravity Switches
 	ctx.strokeStyle = 'green';
 	gravityButtons.forEach(button => {
-		ctx.beginPath();
-		ctx.arc(button.x + scrollDistance + (button.width / 2), 
-				button.y + (button.width / 2) - 3, 
-				button.width / 2, 
-				Math.PI * (5 / 4), 
-				Math.PI * (7/4));
-		ctx.stroke();
+		if (button.direction > 0) {
+			ctx.beginPath();
+			ctx.arc(button.x + scrollDistance + (button.width / 2), 
+					button.y + (button.width / 2) - 3, 
+					button.width / 2, 
+					Math.PI * (5 / 4), 
+					Math.PI * (7 / 4));
+			ctx.stroke();
 
-		// Floaty waves
-		if (button.floatWave >= button.floatHeight) {
-			button.floatWave = 0;
+			// Floaty waves
+			if (button.floatWave >= button.floatHeight) {
+				button.floatWave = 0;
+			} else {
+				button.floatWave += 0.25;
+			}
+
+			// Draw the floaty waves
+			ctx.beginPath();
+			ctx.globalAlpha = 1 - (button.floatWave / button.floatHeight);
+			ctx.arc(button.x + scrollDistance + (button.width / 2),
+				button.y + (button.width / 2) - 3 - button.floatWave,
+				button.width / 2,
+				Math.PI * (5 / 4),
+				Math.PI * (7 / 4));
+			ctx.stroke();
+
+			ctx.beginPath();
+			const secondFloat = button.floatWave >= (button.floatHeight / 2) 
+				? button.floatWave - (button.floatHeight / 2)
+				: button.floatWave + (button.floatHeight / 2);
+
+			ctx.globalAlpha = 1 - (secondFloat / button.floatHeight);
+			ctx.arc(button.x + scrollDistance + (button.width / 2),
+				button.y + (button.width / 2) - 3 - secondFloat,
+				button.width / 2,
+				Math.PI * (5 / 4),
+				Math.PI * (7 / 4));
+			ctx.stroke();
 		} else {
-			button.floatWave += 0.25;
+			ctx.beginPath();
+			ctx.strokeRect(button.x, button.y, button.width, button.height);
+			ctx.arc(button.x + scrollDistance + (button.width / 2),
+				button.y - (button.width / 2),
+				button.width / 2,
+				Math.PI * (1 / 4),
+				Math.PI * (3 / 4));
+			ctx.stroke();
+
+			// Floaty waves
+			if (button.floatWave >= button.floatHeight) {
+				button.floatWave = 0;
+			} else {
+				button.floatWave += 0.25;
+			}
+
+			// Draw the floaty waves
+			ctx.beginPath();
+			ctx.globalAlpha = 1 - (button.floatWave / button.floatHeight);
+			ctx.arc(button.x + scrollDistance + (button.width / 2),
+				button.y + (button.width / 2) - 3 + button.floatWave,
+				button.width / 2,
+				Math.PI * (1 / 4),
+				Math.PI * (3 / 4));
+			ctx.stroke();
+
+			ctx.beginPath();
+			const secondFloat = button.floatWave >= (button.floatHeight / 2)
+				? button.floatWave - (button.floatHeight / 2)
+				: button.floatWave + (button.floatHeight / 2);
+
+			ctx.globalAlpha = 1 - (secondFloat / button.floatHeight);
+			ctx.arc(button.x + scrollDistance + (button.width / 2),
+				button.y + (button.width / 2) - 3 + secondFloat,
+				button.width / 2,
+				Math.PI * (1 / 4),
+				Math.PI * (3 / 4));
+			ctx.stroke();
 		}
-
-		// Draw the floaty waves
-		ctx.beginPath();
-		ctx.globalAlpha = 1 - (button.floatWave / button.floatHeight);
-		ctx.arc(button.x + scrollDistance + (button.width / 2),
-			button.y + (button.width / 2) - 3 - button.floatWave,
-			button.width / 2,
-			Math.PI * (5 / 4),
-			Math.PI * (7 / 4));
-		ctx.stroke();
-
-		ctx.beginPath();
-		const secondFloat = button.floatWave >= (button.floatHeight / 2) 
-			? button.floatWave - (button.floatHeight / 2)
-			: button.floatWave + (button.floatHeight / 2);
-
-		ctx.globalAlpha = 1 - (secondFloat / button.floatHeight);
-		ctx.arc(button.x + scrollDistance + (button.width / 2),
-			button.y + (button.width / 2) - 3 - secondFloat,
-			button.width / 2,
-			Math.PI * (5 / 4),
-			Math.PI * (7 / 4));
-		ctx.stroke();
 
 		ctx.globalAlpha = 1;
 
@@ -838,7 +992,7 @@ function levelText() {
 		return "2. Watch Out!"
 	} else if (-scrollDistance < (gameWidth * 8)) {
 		return "3. Anti Grav"
-	} else if (-scrollDistance < (gameWidth * 12)) {
+	} else if (-scrollDistance < (gameWidth * 11)) {
 		return "4. The Key"
 	} else {
 		return "5. HEYOOOO!"
@@ -1002,18 +1156,6 @@ function drawHat() {
 	ctx.strokeRect(player.x - 5, player.y + (player.height / 3), player.width + 10, 0);
 }
 
-// Bounce player while they walk
-function walkCycle() {
-
-}
-// Squish player when they land on the ground after falling
-function hitGround() {
-
-}
-// Set player to regular shape
-function resetPlayerShape() {
-
-}
 // Animate the player dying
 function deathAnimation() {
 	ctx.clearRect(0, 0, gameWidth, gameHeight);
