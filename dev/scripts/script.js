@@ -756,9 +756,11 @@ function update() {
 
 	// Draw player
 	ctx.strokeStyle = '#12B4E9';
+	ctx.fillStyle = '#000000'
 	if (player.alive) {
-		ctx.strokeRect(player.x, player.y, player.width, player.height);
 		drawPrevFrames();
+		ctx.fillRect(player.x, player.y, player.width, player.height);
+		ctx.strokeRect(player.x, player.y, player.width, player.height);
 
 		// Run the game!
 		requestAnimationFrame(update);
