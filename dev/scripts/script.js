@@ -38,7 +38,6 @@ let scrollDistance = 0;
 let bulletDelay = 0;
 let gravityDirection = 1;
 let gravSwitch = 0;
-let gameText = "1: Platforming"
 
 // User input
 const keys = [];
@@ -146,7 +145,30 @@ const tutorialPlatforms = [
 		height: 0.76
 	},
 	// PART 3
-
+	{
+		x: 6.3,
+		y: 0.25,
+		width: 0.017,
+		height: 0.505
+	},
+	{
+		x: 6.317,
+		y: 0.25,
+		width: 1.583,
+		height: 0.03
+	},
+	{
+		x: 6.317,
+		y: 0.725,
+		width: 1.3,
+		height: 0.03
+	},
+	{
+		x: 7.9,
+		y: 0.25,
+		width: 1.1,
+		height: 0.76
+	},
 	// PART 4
 
 	// PART 5
@@ -205,7 +227,178 @@ const tutorialEnemies = [
 	},
 ]
 
-const enemies = [...tutorialEnemies]
+const enemies = [...tutorialEnemies];
+
+const tutorialArrows = [
+	// PART 1
+	{
+		x: 2,
+		y: 0.05,
+		height: 0.15,
+		color: {
+			light: '#12B4E9',
+			dark: 'darkred'
+		}
+	},
+	{
+		x: 1.96,
+		y: 0.05,
+		height: 0.15,
+		color: {
+			light: '#12B4E9',
+			dark: 'darkred'
+		}
+	},
+	{
+		x: 1.92,
+		y: 0.05,
+		height: 0.15,
+		color: {
+			light: '#12B4E9',
+			dark: 'darkred'
+		}
+	},
+	// PART 2
+	{
+		x: 2.95,
+		y: 0.05,
+		height: 0.15,
+		color: {
+			light: 'red',
+			dark: 'darkred'
+		}
+	},
+	{
+		x: 2.91,
+		y: 0.05,
+		height: 0.15,
+		color: {
+			light: 'red',
+			dark: 'darkred'
+		}
+	},
+	{
+		x: 2.87,
+		y: 0.05,
+		height: 0.15,
+		color: {
+			light: 'red',
+			dark: 'darkred'
+		}
+	},
+	{
+		x: 5,
+		y: 0.05,
+		height: 0.15,
+		color: {
+			light: 'red',
+			dark: 'darkred'
+		}
+	},
+	{
+		x: 4.96,
+		y: 0.05,
+		height: 0.15,
+		color: {
+			light: 'red',
+			dark: 'darkred'
+		}
+	},
+	{
+		x: 4.92,
+		y: 0.05,
+		height: 0.15,
+		color: {
+			light: 'red',
+			dark: 'darkred'
+		}
+	},
+	// PART 3
+	{
+		x: 5.95,
+		y: 0.05,
+		height: 0.15,
+		color: {
+			light: 'green',
+			dark: 'darkred'
+		}
+	},
+	{
+		x: 5.91,
+		y: 0.05,
+		height: 0.15,
+		color: {
+			light: 'green',
+			dark: 'darkred'
+		}
+	},
+	{
+		x: 5.87,
+		y: 0.05,
+		height: 0.15,
+		color: {
+			light: 'green',
+			dark: 'darkred'
+		}
+	},
+	{
+		x: 8,
+		y: 0.05,
+		height: 0.15,
+		color: {
+			light: 'green',
+			dark: 'darkred'
+		}
+	},
+	{
+		x: 7.96,
+		y: 0.05,
+		height: 0.15,
+		color: {
+			light: 'green',
+			dark: 'darkred'
+		}
+	},
+	{
+		x: 7.92,
+		y: 0.05,
+		height: 0.15,
+		color: {
+			light: 'green',
+			dark: 'darkred'
+		}
+	},
+	// PART 4
+	{
+		x: 11,
+		y: 0.05,
+		height: 0.15,
+		color: {
+			light: 'yellow',
+			dark: 'darkred'
+		}
+	},
+	{
+		x: 10.96,
+		y: 0.05,
+		height: 0.15,
+		color: {
+			light: 'yellow',
+			dark: 'darkred'
+		}
+	},
+	{
+		x: 10.92,
+		y: 0.05,
+		height: 0.15,
+		color: {
+			light: 'yellow',
+			dark: 'darkred'
+		}
+	},
+]
+const arrows = [...tutorialArrows];
+
 
 // Player object
 const player = {
@@ -272,7 +465,6 @@ function update() {
 
 	// Draw objects in world
 	ctx.lineWidth = 2;
-	ctx.beginPath();
 
 	player.grounded = false;
 	// Draw coins
@@ -375,11 +567,11 @@ function update() {
 
 	// Move the player based on xVelocity calculations above
 	// If the player is within the 'playable' area - before scroll bounds on either side
-	if ((player.x > scrollBound) && (player.x < (gameWidth - (scrollBound * 2)))) {
+	if ((player.x > scrollBound) && (player.x < (gameWidth / 2))) {
 		player.x += player.xVelocity;
 	}
 	// Else, the player is pushing the screen on the RIGHT bound
-	else if (player.x >= (gameWidth - (scrollBound * 2))) {
+	else if (player.x >= (gameWidth / 2)) {
 		// Push the screen RIGHT if that's the direction player is walking
 		if ((player.xVelocity > 0) && (-scrollDistance < levelWidth)) {
 			scrollDistance -= player.xVelocity;
@@ -427,13 +619,55 @@ function bottomText() {
 	ctx.strokeStyle = '#12B4E9';
 	ctx.font = "24px 'Press Start 2P'";
 
+	const levelTitle = levelText();
+
 	// Level title
 	ctx.textAlign = 'left';
-	ctx.strokeText(gameText, 10, gameHeight + 50);
+	ctx.strokeText(levelTitle, 10, gameHeight + 50);
 
 	// Score
 	ctx.textAlign = 'right';
-	ctx.strokeText(player.score, gameWidth - 10, gameHeight + 50);	
+	ctx.strokeText(player.score, gameWidth - 10, gameHeight + 50);
+	arrows.forEach(arrow => {
+		arrowShape(scrollDistance + (gameWidth * arrow.x),
+				  (gameHeight * arrow.y),
+				  (gameHeight * arrow.height),
+				  (arrow.color.light));
+	})
+}
+
+function arrowShape(offsetX, offsetY, height, arrowColor) {
+	ctx.strokeStyle = arrowColor;
+	ctx.beginPath();
+	ctx.moveTo(0 + offsetX, 0 + offsetY);
+	ctx.lineTo((height / 4) + offsetX, (height / 2) + offsetY);
+	ctx.lineTo(0 + offsetX, height + offsetY);
+	ctx.lineTo((height / 4) + offsetX, height + offsetY);
+	ctx.lineTo((height / 2) + offsetX, (height / 2) + offsetY);
+	ctx.lineTo((height / 4) + offsetX, 0 + offsetY);
+	// ctx.moveTo(plusScrollDistance(0), 0);
+	// ctx.lineTo(plusScrollDistance(25), 50);
+	// ctx.lineTo(plusScrollDistance(0), 100);
+	// ctx.lineTo(plusScrollDistance(25), 100);
+	// ctx.lineTo(plusScrollDistance(50), 50);
+	// ctx.lineTo(plusScrollDistance(25), 0);
+	ctx.closePath();
+	ctx.stroke();
+}
+
+// rewrite level text (without drawing on ctx)
+function levelText() {
+	if (-scrollDistance < (gameWidth * 2)) {
+		return "1. Platforming"
+	} else if (-scrollDistance < (gameWidth * 5)) {
+		return "2. Watch Out!"
+	} else if (-scrollDistance < (gameWidth * 8)) {
+		return "3. Anti Grav"
+	} else if (-scrollDistance < (gameWidth * 12)) {
+		return "4. The Key"
+	} else {
+		return "5. HEYOOOO!"
+	}
 }
 
 // Collision check - coins - credit to http://www.somethinghitme.com
