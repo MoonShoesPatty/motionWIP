@@ -189,7 +189,9 @@ const tutorialGrav = [
 		x: 6.5 * gameWidth,
 		y: 0.708 * gameHeight,
 		width: 0.08 * gameWidth,
-		height: 0.02 * gameHeight
+		height: 0.02 * gameHeight,
+		floatWave: 0,
+		floatHeight: 50
 	},
 ]
 
@@ -594,9 +596,46 @@ function update() {
 	ctx.strokeStyle = 'green';
 	gravityButtons.forEach(button => {
 		ctx.beginPath();
-		ctx.arc(button.x + scrollDistance + (button.width / 2), button.y + 37, 40, Math.PI * (5 / 4), Math.PI * (7/4));
+		ctx.arc(button.x + scrollDistance + (button.width / 2), 
+				button.y + (button.width / 2) - 3, 
+				button.width / 2, 
+				Math.PI * (5 / 4), 
+				Math.PI * (7/4));
 		ctx.stroke();
-		//ctx.strokeRect(button.x + scrollDistance, button.y, button.width, button.height);
+
+
+		// Floaty waves
+		if (button.floatWave >= button.floatHeight) {
+			button.floatWave = 0;
+		} else {
+			button.floatWave += 0.2;
+		}
+
+		// Draw the floaty waves
+		ctx.beginPath();
+		ctx.globalAlpha = 1 - (button.floatWave / button.floatHeight);
+		ctx.arc(button.x + scrollDistance + (button.width / 2),
+			button.y + (button.width / 2) - 3 - button.floatWave,
+			button.width / 2,
+			Math.PI * (5 / 4),
+			Math.PI * (7 / 4));
+		ctx.stroke();
+
+		ctx.beginPath();
+		const secondFloat = button.floatWave >= (button.floatHeight / 2) 
+							? button.floatWave - (button.floatHeight / 2)
+							: button.floatWave + (button.floatHeight / 2);
+
+		ctx.globalAlpha = 1 - (secondFloat / button.floatHeight);
+		ctx.arc(button.x + scrollDistance + (button.width / 2),
+			button.y + (button.width / 2) - 3 - secondFloat,
+			button.width / 2,
+			Math.PI * (5 / 4),
+			Math.PI * (7 / 4));
+		ctx.stroke();
+
+		ctx.globalAlpha = 1;
+
 		let collisionDirection = coinCheck(player, button);
 		if (collisionDirection && gravSwitch < 0) {
 			gravityDirection *= -1;
@@ -722,17 +761,11 @@ function arrowShape(offsetX, offsetY, height, arrowColor) {
 	ctx.lineTo((height / 4) + offsetX, height + offsetY);
 	ctx.lineTo((height / 2) + offsetX, (height / 2) + offsetY);
 	ctx.lineTo((height / 4) + offsetX, 0 + offsetY);
-	// ctx.moveTo(plusScrollDistance(0), 0);
-	// ctx.lineTo(plusScrollDistance(25), 50);
-	// ctx.lineTo(plusScrollDistance(0), 100);
-	// ctx.lineTo(plusScrollDistance(25), 100);
-	// ctx.lineTo(plusScrollDistance(50), 50);
-	// ctx.lineTo(plusScrollDistance(25), 0);
 	ctx.closePath();
 	ctx.stroke();
 }
 
-// rewrite level text (without drawing on ctx)
+// rewrite level text (doesn't draw on ctx)
 function levelText() {
 	if (-scrollDistance < (gameWidth * 2)) {
 		return "1. Platforming"
