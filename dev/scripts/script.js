@@ -34,7 +34,7 @@ const deathPauseLength = 800;
 const bulletSpeed = 20;
 
 // scroll distance, used to offset platforms as screen scrolls
-let scrollDistance = 0;
+let scrollDistance = -4800;
 let bulletDelay = 0;
 let gravityDirection = 1;
 let gravSwitch = 0;
@@ -183,6 +183,18 @@ tutorialPlatforms.forEach(platform => {
 	})
 })
 
+// Gravity Switches
+const tutorialGrav = [
+	{
+		x: 6.5 * gameWidth,
+		y: 0.708 * gameHeight,
+		width: 0.08 * gameWidth,
+		height: 0.02 * gameHeight
+	},
+]
+
+const gravityButtons = [...tutorialGrav]
+
 // Items array
 const items = [];
 // coin items
@@ -219,6 +231,30 @@ const tutorialEnemies = [
 	},
 	{
 		x: gameWidth * 4.8,
+		y: gameHeight - playerSize,
+		width: playerSize,
+		height: playerSize,
+		speed: 3,
+		alive: true
+	},
+	{
+		x: gameWidth * 6.2,
+		y: gameHeight - playerSize,
+		width: playerSize,
+		height: playerSize,
+		speed: 3,
+		alive: true
+	},
+	{
+		x: gameWidth * 6.5,
+		y: gameHeight - playerSize,
+		width: playerSize,
+		height: playerSize,
+		speed: 3,
+		alive: true
+	},
+	{
+		x: gameWidth * 6.8,
 		y: gameHeight - playerSize,
 		width: playerSize,
 		height: playerSize,
@@ -369,6 +405,33 @@ const tutorialArrows = [
 		}
 	},
 	// PART 4
+	{
+		x: 8.95,
+		y: 0.05,
+		height: 0.15,
+		color: {
+			light: 'yellow',
+			dark: 'darkred'
+		}
+	},
+	{
+		x: 8.91,
+		y: 0.05,
+		height: 0.15,
+		color: {
+			light: 'yellow',
+			dark: 'darkred'
+		}
+	},
+	{
+		x: 8.87,
+		y: 0.05,
+		height: 0.15,
+		color: {
+			light: 'yellow',
+			dark: 'darkred'
+		}
+	},
 	{
 		x: 11,
 		y: 0.05,
@@ -527,6 +590,26 @@ function update() {
 			player.score += 200;
 		}
 	})
+	// Gravity Switches
+	ctx.strokeStyle = 'green';
+	gravityButtons.forEach(button => {
+		ctx.beginPath();
+		ctx.arc(button.x + scrollDistance + (button.width / 2), button.y + 37, 40, Math.PI * (5 / 4), Math.PI * (7/4));
+		ctx.stroke();
+		//ctx.strokeRect(button.x + scrollDistance, button.y, button.width, button.height);
+		let collisionDirection = coinCheck(player, button);
+		if (collisionDirection && gravSwitch < 0) {
+			gravityDirection *= -1;
+			gravSwitch = 40;
+		}
+	})
+	// Direction arrows
+	arrows.forEach(arrow => {
+		arrowShape(scrollDistance + (gameWidth * arrow.x),
+			(gameHeight * arrow.y),
+			(gameHeight * arrow.height),
+			(arrow.color.light));
+	})
 	// Draw platforms
 	ctx.strokeStyle = 'white';
 	platforms.forEach(platform => {
@@ -628,12 +711,6 @@ function bottomText() {
 	// Score
 	ctx.textAlign = 'right';
 	ctx.strokeText(player.score, gameWidth - 10, gameHeight + 50);
-	arrows.forEach(arrow => {
-		arrowShape(scrollDistance + (gameWidth * arrow.x),
-				  (gameHeight * arrow.y),
-				  (gameHeight * arrow.height),
-				  (arrow.color.light));
-	})
 }
 
 function arrowShape(offsetX, offsetY, height, arrowColor) {
@@ -673,11 +750,11 @@ function levelText() {
 // Collision check - coins - credit to http://www.somethinghitme.com
 function coinCheck(player, coin) {
 	// get the vectors to check against
-	const vX = (player.x + (player.width / 2)) - (plusScrollDistance(coin) + (coinSize / 2));
-	const vY = (player.y + (player.height / 2)) - (coin.y + (coinSize / 2));
+	const vX = (player.x + (player.width / 2)) - (plusScrollDistance(coin) + (coin.width / 2));
+	const vY = (player.y + (player.height / 2)) - (coin.y + (coin.height / 2));
 	// add the half widths and half heights of the objects
-	const hWidths = (player.width / 2) + (coinSize / 2);
-	const hHeights = (player.height / 2) + (coinSize / 2);
+	const hWidths = (player.width / 2) + (coin.width / 2);
+	const hHeights = (player.height / 2) + (coin.height / 2);
 	// return value - are we colliding?
 	let collision = null;
 
