@@ -34,7 +34,7 @@ const deathPauseLength = 800;
 const bulletSpeed = 20;
 
 // scroll distance, used to offset platforms as screen scrolls
-let scrollDistance = -(8.8 * gameWidth);
+let scrollDistance = 0;
 let bulletDelay = 0;
 let gravityDirection = 1;
 let gravSwitch = 0;
@@ -268,6 +268,7 @@ tutorialPlatforms.forEach(platform => {
 
 // Gravity Switches
 const tutorialGrav = [
+	// PART 3
 	{
 		x: 6.5 * gameWidth,
 		y: 0.708 * gameHeight,
@@ -278,6 +279,16 @@ const tutorialGrav = [
 		direction: 1
 	},
 	{
+		x: 7.64 * gameWidth,
+		y: 3,
+		width: 0.08 * gameWidth,
+		height: 0.02 * gameHeight,
+		floatWave: 0,
+		floatHeight: 50,
+		direction: -1
+	},
+	// PART 4
+	{
 		x: 10.76 * gameWidth,
 		y: 0.98 * gameHeight,
 		width: 0.08 * gameWidth,
@@ -287,8 +298,17 @@ const tutorialGrav = [
 		direction: 1
 	},
 	{
-		x: 9.5 * gameWidth,
-		y: 0.5,
+		x: 9.4 * gameWidth,
+		y: 3,
+		width: 0.08 * gameWidth,
+		height: 0.02 * gameHeight,
+		floatWave: 0,
+		floatHeight: 50,
+		direction: -1
+	},
+	{
+		x: 11.2 * gameWidth,
+		y: 3,
 		width: 0.08 * gameWidth,
 		height: 0.02 * gameHeight,
 		floatWave: 0,
@@ -840,9 +860,9 @@ function update() {
 			ctx.stroke();
 		} else {
 			ctx.beginPath();
-			ctx.strokeRect(button.x, button.y, button.width, button.height);
+			//ctx.strokeRect(button.x + scrollDistance, button.y, button.width, button.height);
 			ctx.arc(button.x + scrollDistance + (button.width / 2),
-				button.y - (button.width / 2),
+				button.y - (button.width / 2) + 9,
 				button.width / 2,
 				Math.PI * (1 / 4),
 				Math.PI * (3 / 4));
@@ -859,7 +879,7 @@ function update() {
 			ctx.beginPath();
 			ctx.globalAlpha = 1 - (button.floatWave / button.floatHeight);
 			ctx.arc(button.x + scrollDistance + (button.width / 2),
-				button.y + (button.width / 2) - 3 + button.floatWave,
+				button.y - (button.width / 2) + 9 + button.floatWave,
 				button.width / 2,
 				Math.PI * (1 / 4),
 				Math.PI * (3 / 4));
@@ -872,7 +892,7 @@ function update() {
 
 			ctx.globalAlpha = 1 - (secondFloat / button.floatHeight);
 			ctx.arc(button.x + scrollDistance + (button.width / 2),
-				button.y + (button.width / 2) - 3 + secondFloat,
+				button.y - (button.width / 2) + 9 + secondFloat,
 				button.width / 2,
 				Math.PI * (1 / 4),
 				Math.PI * (3 / 4));
