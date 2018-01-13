@@ -255,7 +255,26 @@ const tutorialPlatforms = [
 		height: 0.76
 	},
 	// PART 5
+	{
+		x: 12.15,
+		y: 0.67,
+		width: 0.25,
+		height: 0.03
+	},
+	{
+		x: 12.6,
+		y: 0.67,
+		width: 0.25,
+		height: 0.03
+	},
+	{
+		x: 12.35,
+		y: 0.33,
+		width: 0.3,
+		height: 0.03
+	},
 ]
+scrollDistance = -12 * gameWidth;
 
 tutorialPlatforms.forEach(platform => {
 	platforms.push({
@@ -680,6 +699,7 @@ const player = {
 	alive: true,
 	doubleJumps: 0,
 	keys: 0,
+	crown: true,
 	prevPosition: [
 		{
 			x: 0,
@@ -1021,6 +1041,8 @@ function update() {
 		deathDelay(deathPauseLength);
 	}
 
+	// Victory crown
+	crown();
 	// Score text & level titles below game screen
 	bottomText();
 }
@@ -1029,9 +1051,7 @@ function drawPrevFrames() {;
 	for (let i = player.prevPosition.length - 1; i >= 0; i--) {
 		ctx.globalAlpha = (0.3 / i) + 0.1;
 		if (i % 3 === 2) {
-			//if (keys[16] || player.jumping) {
-				ctx.strokeRect(player.prevPosition[i].x, player.prevPosition[i].y, player.width, player.height);
-			//}
+			ctx.strokeRect(player.prevPosition[i].x, player.prevPosition[i].y, player.width, player.height);
 		}
 		if (i > 0) {
 			player.prevPosition[i].x = player.prevPosition[i - 1].x;
@@ -1058,7 +1078,6 @@ function bottomText() {
 	
 	ctx.strokeStyle = levelTitle.color;
 	ctx.font = "24px 'Press Start 2P'";
-
 
 	// Level title
 	ctx.textAlign = 'left';
@@ -1252,6 +1271,50 @@ function drawHat() {
 	ctx.strokeStyle = 'yellow';
 	ctx.strokeRect(player.x, player.y, player.width, player.height / 3);
 	ctx.strokeRect(player.x - 5, player.y + (player.height / 3), player.width + 10, 0);
+}
+
+function crown() {
+	if (player.crown) {
+		let offsetY = player.yVelocity * gravityDirection;
+		ctx.strokeStyle = 'yellow';
+		ctx.fillStyle = 'black';
+		ctx.beginPath();
+		if (gravityDirection > 0) {
+			ctx.moveTo(player.x, player.y - offsetY);
+			ctx.bezierCurveTo(player.x + (player.width / 4), 
+							player.y + (player.height / 15) - offsetY,
+							player.x + (player.width * (3 / 4)),
+							player.y + (player.height / 15) - offsetY,
+							player.x + player.width,
+							player.y - offsetY);
+			ctx.lineTo(player.x + (player.width * (11 / 10)),  player.y - (player.height / 3) - offsetY);
+			ctx.lineTo(player.x + (player.width * (9 / 10)),   player.y - (player.height / 4) - offsetY);
+			ctx.lineTo(player.x + (player.width * (7.5 / 10)), player.y - (player.height / 2) - offsetY);
+			ctx.lineTo(player.x + (player.width * (5 / 10)),   player.y - (player.height / 3.5) - offsetY);
+			ctx.lineTo(player.x + (player.width * (2.5 / 10)), player.y - (player.height / 2) - offsetY);
+			ctx.lineTo(player.x + (player.width * (1 / 10)),   player.y - (player.height / 4) - offsetY);
+			ctx.lineTo(player.x + (player.width * (-1 / 10)),  player.y - (player.height / 3) - offsetY);
+		} else {
+			ctx.moveTo(player.x, (player.y + player.height) - (-offsetY));
+			ctx.bezierCurveTo(player.x + (player.width / 4),
+				(player.y + player.height) - ((player.height / 15) - offsetY),
+				player.x + (player.width * (3 / 4)),
+				(player.y + player.height) - ((player.height / 15) - offsetY),
+				player.x + player.width,
+				(player.y + player.height) - (-offsetY));
+			ctx.lineTo(player.x + (player.width * (11 / 10)), (player.y + player.height) - (-(player.height / 3) - offsetY));
+			ctx.lineTo(player.x + (player.width * (9 / 10)), (player.y + player.height) - (-(player.height / 4) - offsetY));
+			ctx.lineTo(player.x + (player.width * (7.5 / 10)), (player.y + player.height) - (-(player.height / 2) - offsetY));
+			ctx.lineTo(player.x + (player.width * (5 / 10)), (player.y + player.height) - (-(player.height / 3.5) - offsetY));
+			ctx.lineTo(player.x + (player.width * (2.5 / 10)), (player.y + player.height) - (-(player.height / 2) - offsetY));
+			ctx.lineTo(player.x + (player.width * (1 / 10)), (player.y + player.height) - (-(player.height / 4) - offsetY));
+			ctx.lineTo(player.x + (player.width * (-1 / 10)), (player.y + player.height) - (-(player.height / 3) - offsetY));
+		}
+		ctx.closePath();
+		ctx.fill();
+		ctx.stroke();
+	}
+	//ctx.strokeRect(player.x, player.y, player.width, player.height / 3);
 }
 
 // Animate the player dying
