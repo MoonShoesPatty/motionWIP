@@ -278,7 +278,7 @@ const tutorialGrav = [
 		direction: 1
 	},
 	{
-		x: 10.57 * gameWidth,
+		x: 10.76 * gameWidth,
 		y: 0.98 * gameHeight,
 		width: 0.08 * gameWidth,
 		height: 0.02 * gameHeight,
@@ -302,8 +302,40 @@ const gravityButtons = [...tutorialGrav]
 // Items array
 const tutorialItems = [
 	{
-		x: gameWidth * 10,
-		y: gameHeight * 0.5,
+		x: gameWidth * 9.7,
+		y: gameHeight * 0.1,
+		width: coinSize,
+		height: coinSize,
+		keyCoin: true,
+		collected: false
+	},
+	{
+		x: gameWidth * 9.3,
+		y: gameHeight * 0.87,
+		width: coinSize,
+		height: coinSize,
+		keyCoin: true,
+		collected: false
+	},
+	{
+		x: gameWidth * 9.95,
+		y: gameHeight * 0.87,
+		width: coinSize,
+		height: coinSize,
+		keyCoin: true,
+		collected: false
+	},
+	{
+		x: gameWidth * 9.1,
+		y: gameHeight * 0.87,
+		width: coinSize,
+		height: coinSize,
+		keyCoin: true,
+		collected: false
+	},
+	{
+		x: gameWidth * 10.4,
+		y: gameHeight * 0.87,
 		width: coinSize,
 		height: coinSize,
 		keyCoin: true,
@@ -311,6 +343,18 @@ const tutorialItems = [
 	},
 ]
 const items = [...tutorialItems];
+
+// Door @ end of stage 4
+const tutorialDoors = [
+	{
+		x: 10.75 * gameWidth,
+		y: 0,
+		width: 0.1 * gameWidth,
+		height: 0.25 * gameHeight,
+		keysNeeded: 5
+	}
+];
+const doors = [...tutorialDoors];
 
 const projectiles = [];
 
@@ -575,7 +619,6 @@ const tutorialArrows = [
 ]
 const arrows = [...tutorialArrows];
 
-
 // Player object
 const player = {
 	x: 150,
@@ -703,6 +746,17 @@ function update() {
 			}
 		}
 	});
+	// Doors - so far just @ end of stage 4
+	ctx.strokeStyle = 'yellow';	
+	doors.forEach(door => {
+		if (player.keys < door.keysNeeded) {
+			ctx.strokeRect(door.x + scrollDistance, door.y, door.width, door.height);
+			ctx.font = "36px 'Press Start 2P'";
+			ctx.textAlign = 'center';			
+			ctx.strokeText(`${door.keysNeeded - player.keys}`, door.x + scrollDistance + (door.width / 2), door.y + 80);
+			let collisionDirection = collisionCheck(player, door);			
+		}
+	})
 	// Draw projectiles
 	projectiles.forEach(bullet => {
 		let collisionDirection;
@@ -957,14 +1011,15 @@ function drawPrevFrames() {;
 function bottomText() {
 	// Clear last & set color
 	ctx.clearRect(0, gameHeight, gameWidth, 300);
-	ctx.strokeStyle = '#12B4E9';
+	const levelTitle = levelText();
+	
+	ctx.strokeStyle = levelTitle.color;
 	ctx.font = "24px 'Press Start 2P'";
 
-	const levelTitle = levelText();
 
 	// Level title
 	ctx.textAlign = 'left';
-	ctx.strokeText(levelTitle, 10, gameHeight + 50);
+	ctx.strokeText(levelTitle.text, 10, gameHeight + 50);
 
 	// Score
 	ctx.textAlign = 'right';
@@ -987,15 +1042,15 @@ function arrowShape(offsetX, offsetY, height, arrowColor) {
 // rewrite level text (doesn't draw on ctx)
 function levelText() {
 	if (-scrollDistance < (gameWidth * 2)) {
-		return "1. Platforming"
+		return {text: "1. Platforming", color: '#12B4E9'}
 	} else if (-scrollDistance < (gameWidth * 5)) {
-		return "2. Watch Out!"
+		return { text: "2. Watch Out!", color: 'red' }
 	} else if (-scrollDistance < (gameWidth * 8)) {
-		return "3. Anti Grav"
+		return { text: "3. Anti Grav", color: 'green' }
 	} else if (-scrollDistance < (gameWidth * 11)) {
-		return "4. The Key"
+		return { text: "4. The Key", color: 'yellow' }
 	} else {
-		return "5. HEYOOOO!"
+		return { text: "5. HEYOOOO!", color: 'purple' }
 	}
 }
 
