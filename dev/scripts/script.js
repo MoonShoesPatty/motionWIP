@@ -361,6 +361,22 @@ const tutorialItems = [
 		keyCoin: true,
 		collected: false
 	},
+	{
+		x: gameWidth * 8.5,
+		y: gameHeight * 0.13,
+		width: coinSize,
+		height: coinSize,
+		keyCoin: true,
+		collected: false
+	},
+	{
+		x: gameWidth * 8.6,
+		y: gameHeight * 0.13,
+		width: coinSize,
+		height: coinSize,
+		keyCoin: true,
+		collected: false
+	},
 ]
 const items = [...tutorialItems];
 
@@ -371,8 +387,15 @@ const tutorialDoors = [
 		y: 0,
 		width: 0.1 * gameWidth,
 		height: 0.25 * gameHeight,
-		keysNeeded: 5
-	}
+		keysNeeded: 7
+	},
+	{
+		x: 8.7 * gameWidth,
+		y: 0,
+		width: 0.1 * gameWidth,
+		height: 0.25 * gameHeight,
+		keysNeeded: 2
+	},
 ];
 const doors = [...tutorialDoors];
 
