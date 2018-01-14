@@ -1,5 +1,6 @@
 // Redraw function in canvas, called later to refresh graphics
 (function () {
+	// grab for all browsers
 	const requestAnimationFrame = window.requestAnimationFrame || window.mozRequestAnimationFrame || window.webkitRequestAnimationFrame || window.msRequestAnimationFrame;
 	window.requestAnimationFrame = requestAnimationFrame;
 })();
@@ -7,6 +8,9 @@
 // Canvas selectors
 const canvas = document.getElementById('gameScreen');
 const ctx = canvas.getContext('2d');
+
+// Display a text screen (start or death) screen and not level
+let screenDisplay = false;
 
 // Game size
 const gameWidth = 853;
@@ -274,7 +278,6 @@ const tutorialPlatforms = [
 		height: 0.03
 	},
 ]
-scrollDistance = -12 * gameWidth;
 
 tutorialPlatforms.forEach(platform => {
 	platforms.push({
@@ -742,311 +745,346 @@ const player = {
 
 // Redraw game
 function update() {
-	// Right Arrow Key
-	if (keys[39]) {
-		// multiply everything by a factor of (1) -> moves the character right		
-		horizontalMove(1);
-	}
-	// Left Arrow Key
-	if (keys[37]) {
-		// multiply everything by a factor of (-1) -> moves the character left
-		horizontalMove(-1);
-	}
-	//      UP   or   SPACE
-	if (keys[38] || keys[32]) {
-		jump();
-	}
-	// D for SHOOT
-	if (keys[68]) {
-		shoot();
-	}
-	// S switches gravity
-	if (keys[83] && gravSwitch < 0) {
-		gravityDirection *= -1;
-		gravSwitch = 40;
-	}
-	gravSwitch--;
-	// SHIFT for RUN
-	if (keys[16]) {
-		player.speed = runSpeed;
-	} else {
-		player.speed = walkSpeed;
-		if (Math.abs(player.xVelocity) > walkSpeed) {
-			player.xVelocity /= 1.1;
+	if (!screenDisplay) {
+		// Right Arrow Key
+		if (keys[39]) {
+			// multiply everything by a factor of (1) -> moves the character right		
+			horizontalMove(1);
 		}
-	}
-	// Move player
-	if (player.grounded && !(keys[39] || keys[37])) {
-		player.xVelocity *= friction;
-	}
-	player.yVelocity += (gravity * gravityDirection);
-
-	// Clear before drawing
-	ctx.clearRect(0, 0, gameWidth, gameHeight);
-
-	// Draw objects in world
-	ctx.lineWidth = 2;
-
-	player.grounded = false;
-	// Draw coins
-	items.forEach(item => {
-		let collisionDirection;
-		if (item.keyCoin && !item.collected) {
-			ctx.strokeStyle = 'yellow';
-			ctx.strokeRect(item.x + scrollDistance, item.y, coinSize, coinSize);
-			if (coinCheck(player, item)) {
-				item.collected = true;
-				player.score += 100;
-				player.keys += 1;
-			}
-		} else if (item.jumpCoin && !item.collected) {
-			ctx.strokeStyle = 'blue';
-			ctx.strokeRect(item.x + scrollDistance, item.y, coinSize, coinSize);
-			collisionDirection = coinCheck(player, item);
-			if (coinCheck(player, item)) {
-				item.collected = true;
-				player.doubleJumps += 1;
+		// Left Arrow Key
+		if (keys[37]) {
+			// multiply everything by a factor of (-1) -> moves the character left
+			horizontalMove(-1);
+		}
+		//      UP   or   SPACE
+		if (keys[38] || keys[32]) {
+			jump();
+		}
+		// D for SHOOT
+		if (keys[68]) {
+			shoot();
+		}
+		// S switches gravity
+		if (keys[83] && gravSwitch < 0) {
+			gravityDirection *= -1;
+			gravSwitch = 40;
+		}
+		gravSwitch--;
+		// SHIFT for RUN
+		if (keys[16]) {
+			player.speed = runSpeed;
+		} else {
+			player.speed = walkSpeed;
+			if (Math.abs(player.xVelocity) > walkSpeed) {
+				player.xVelocity /= 1.1;
 			}
 		}
-	});
-	// Doors - so far just @ end of stage 4
-	ctx.strokeStyle = 'yellow';	
-	doors.forEach(door => {
-		if (player.keys < door.keysNeeded) {
-			ctx.strokeRect(door.x + scrollDistance, door.y, door.width, door.height);
-			ctx.font = "36px 'Press Start 2P'";
-			ctx.textAlign = 'center';			
-			ctx.strokeText(`${door.keysNeeded - player.keys}`, door.x + scrollDistance + (door.width / 2), door.y + 80);
-			let collisionDirection = collisionCheck(player, door);			
+		// Move player
+		if (player.grounded && !(keys[39] || keys[37])) {
+			player.xVelocity *= friction;
 		}
-	})
-	// Draw projectiles
-	projectiles.forEach(bullet => {
-		let collisionDirection;
-		bullet.x += bulletSpeed;
-		ctx.strokeRect(bullet.x + scrollDistance, bullet.y, coinSize, coinSize);
-	})
-	// only allow the player to shoot after time has passed (i.e. no machine guns)
-	bulletDelay--;
-	// Draw enemies
-	ctx.strokeStyle = 'red';
-	enemies.forEach(enemy => {
-		let collisionDirection;
-		let enemyWallDirection;
-		if (enemy.alive) {
-			ctx.strokeRect(enemy.x + scrollDistance, enemy.y, playerSize, playerSize);
-			enemy.x -= enemy.speed;
-			collisionDirection = collisionCheck(player, enemy);
-			platforms.forEach(platform => {
-				enemyWallDirection = enemyCollision(enemy, platform);
-				if (enemyWallDirection === "l" || enemyWallDirection === "r") {
-					enemy.speed *= -1;
+		player.yVelocity += (gravity * gravityDirection);
+
+		// Clear before drawing
+		ctx.clearRect(0, 0, gameWidth, gameHeight);
+
+		// make lines slightly thicker
+		ctx.lineWidth = 2;
+
+		player.grounded = false;
+		// Draw coins
+		items.forEach(item => {
+			let collisionDirection;
+			if (item.keyCoin && !item.collected) {
+				ctx.strokeStyle = 'yellow';
+				ctx.strokeRect(item.x + scrollDistance, item.y, coinSize, coinSize);
+				if (coinCheck(player, item)) {
+					item.collected = true;
+					player.score += 100;
+					player.keys += 1;
 				}
-			})
-		}
-		if (collisionDirection === "l" || collisionDirection === "r" || collisionDirection === "t") {
-			if (player.yVelocity < 2) {
-				player.alive = false;
-			} else {
+			} else if (item.jumpCoin && !item.collected) {
+				ctx.strokeStyle = 'blue';
+				ctx.strokeRect(item.x + scrollDistance, item.y, coinSize, coinSize);
+				collisionDirection = coinCheck(player, item);
+				if (coinCheck(player, item)) {
+					item.collected = true;
+					player.doubleJumps += 1;
+				}
+			}
+		});
+		// Doors - so far just @ end of stage 4
+		ctx.strokeStyle = 'yellow';	
+		doors.forEach(door => {
+			if (player.keys < door.keysNeeded) {
+				ctx.strokeRect(door.x + scrollDistance, door.y, door.width, door.height);
+				ctx.font = "36px 'Press Start 2P'";
+				ctx.textAlign = 'center';			
+				ctx.strokeText(`${door.keysNeeded - player.keys}`, door.x + scrollDistance + (door.width / 2), door.y + 80);
+				let collisionDirection = collisionCheck(player, door);			
+			}
+		})
+		// Draw projectiles
+		projectiles.forEach(bullet => {
+			let collisionDirection;
+			bullet.x += bulletSpeed;
+			ctx.strokeRect(bullet.x + scrollDistance, bullet.y, coinSize, coinSize);
+		})
+		// only allow the player to shoot after time has passed (i.e. no machine guns)
+		bulletDelay--;
+		// Draw enemies
+		ctx.strokeStyle = 'red';
+		enemies.forEach(enemy => {
+			let collisionDirection;
+			let enemyWallDirection;
+			if (enemy.alive) {
+				ctx.strokeRect(enemy.x + scrollDistance, enemy.y, playerSize, playerSize);
+				enemy.x -= enemy.speed;
+				collisionDirection = collisionCheck(player, enemy);
+				platforms.forEach(platform => {
+					enemyWallDirection = enemyCollision(enemy, platform);
+					if (enemyWallDirection === "l" || enemyWallDirection === "r") {
+						enemy.speed *= -1;
+					}
+				})
+			}
+			if (collisionDirection === "l" || collisionDirection === "r" || collisionDirection === "t") {
+				if (player.yVelocity < 2) {
+					player.alive = false;
+				} else {
+					player.yVelocity = -player.yVelocity * 0.5;
+					enemy.speed = 0;
+					enemy.alive = false;
+					player.score += 200;
+				}
+			} else if (collisionDirection === "b") {
 				player.yVelocity = -player.yVelocity * 0.5;
 				enemy.speed = 0;
 				enemy.alive = false;
 				player.score += 200;
 			}
-		} else if (collisionDirection === "b") {
-			player.yVelocity = -player.yVelocity * 0.5;
-			enemy.speed = 0;
-			enemy.alive = false;
-			player.score += 200;
-		}
-	})
-	// Gravity Switches
-	ctx.strokeStyle = 'green';
-	gravityButtons.forEach(button => {
-		if (button.direction > 0) {
-			ctx.beginPath();
-			ctx.arc(button.x + scrollDistance + (button.width / 2), 
-					button.y + (button.width / 2) - 3, 
-					button.width / 2, 
-					Math.PI * (5 / 4), 
+		})
+		// Gravity Switches
+		ctx.strokeStyle = 'green';
+		gravityButtons.forEach(button => {
+			if (button.direction > 0) {
+				ctx.beginPath();
+				ctx.arc(button.x + scrollDistance + (button.width / 2), 
+						button.y + (button.width / 2) - 3, 
+						button.width / 2, 
+						Math.PI * (5 / 4), 
+						Math.PI * (7 / 4));
+				ctx.stroke();
+
+				// Floaty waves
+				if (button.floatWave >= button.floatHeight) {
+					button.floatWave = 0;
+				} else {
+					button.floatWave += 0.25;
+				}
+
+				// Draw the floaty waves
+				ctx.beginPath();
+				ctx.globalAlpha = 1 - (button.floatWave / button.floatHeight);
+				ctx.arc(button.x + scrollDistance + (button.width / 2),
+					button.y + (button.width / 2) - 3 - button.floatWave,
+					button.width / 2,
+					Math.PI * (5 / 4),
 					Math.PI * (7 / 4));
-			ctx.stroke();
+				ctx.stroke();
 
-			// Floaty waves
-			if (button.floatWave >= button.floatHeight) {
-				button.floatWave = 0;
+				ctx.beginPath();
+				const secondFloat = button.floatWave >= (button.floatHeight / 2) 
+					? button.floatWave - (button.floatHeight / 2)
+					: button.floatWave + (button.floatHeight / 2);
+
+				ctx.globalAlpha = 1 - (secondFloat / button.floatHeight);
+				ctx.arc(button.x + scrollDistance + (button.width / 2),
+					button.y + (button.width / 2) - 3 - secondFloat,
+					button.width / 2,
+					Math.PI * (5 / 4),
+					Math.PI * (7 / 4));
+				ctx.stroke();
 			} else {
-				button.floatWave += 0.25;
+				ctx.beginPath();
+				//ctx.strokeRect(button.x + scrollDistance, button.y, button.width, button.height);
+				ctx.arc(button.x + scrollDistance + (button.width / 2),
+					button.y - (button.width / 2) + 9,
+					button.width / 2,
+					Math.PI * (1 / 4),
+					Math.PI * (3 / 4));
+				ctx.stroke();
+
+				// Floaty waves
+				if (button.floatWave >= button.floatHeight) {
+					button.floatWave = 0;
+				} else {
+					button.floatWave += 0.25;
+				}
+
+				// Draw the floaty waves
+				ctx.beginPath();
+				ctx.globalAlpha = 1 - (button.floatWave / button.floatHeight);
+				ctx.arc(button.x + scrollDistance + (button.width / 2),
+					button.y - (button.width / 2) + 9 + button.floatWave,
+					button.width / 2,
+					Math.PI * (1 / 4),
+					Math.PI * (3 / 4));
+				ctx.stroke();
+
+				ctx.beginPath();
+				const secondFloat = button.floatWave >= (button.floatHeight / 2)
+					? button.floatWave - (button.floatHeight / 2)
+					: button.floatWave + (button.floatHeight / 2);
+
+				ctx.globalAlpha = 1 - (secondFloat / button.floatHeight);
+				ctx.arc(button.x + scrollDistance + (button.width / 2),
+					button.y - (button.width / 2) + 9 + secondFloat,
+					button.width / 2,
+					Math.PI * (1 / 4),
+					Math.PI * (3 / 4));
+				ctx.stroke();
 			}
 
-			// Draw the floaty waves
-			ctx.beginPath();
-			ctx.globalAlpha = 1 - (button.floatWave / button.floatHeight);
-			ctx.arc(button.x + scrollDistance + (button.width / 2),
-				button.y + (button.width / 2) - 3 - button.floatWave,
-				button.width / 2,
-				Math.PI * (5 / 4),
-				Math.PI * (7 / 4));
-			ctx.stroke();
+			ctx.globalAlpha = 1;
 
-			ctx.beginPath();
-			const secondFloat = button.floatWave >= (button.floatHeight / 2) 
-				? button.floatWave - (button.floatHeight / 2)
-				: button.floatWave + (button.floatHeight / 2);
+			let collisionDirection = coinCheck(player, button);
+			if (collisionDirection && gravSwitch < 0) {
+				gravityDirection *= -1;
+				gravSwitch = 40;
+			}
+		})
+		// Direction arrows
+		arrows.forEach(arrow => {
+			arrowShape(scrollDistance + (gameWidth * arrow.x),
+				(gameHeight * arrow.y),
+				(gameHeight * arrow.height),
+				(arrow.color.light));
+		})
+		// Draw platforms
+		ctx.strokeStyle = 'white';
+		platforms.forEach(platform => {
+			ctx.strokeRect(
+				(platform.bound) ? platform.x : platform.x + scrollDistance,
+				platform.y,
+				platform.width,
+				platform.height);
+			let collisionDirection = collisionCheck(player, platform);
 
-			ctx.globalAlpha = 1 - (secondFloat / button.floatHeight);
-			ctx.arc(button.x + scrollDistance + (button.width / 2),
-				button.y + (button.width / 2) - 3 - secondFloat,
-				button.width / 2,
-				Math.PI * (5 / 4),
-				Math.PI * (7 / 4));
-			ctx.stroke();
+			if ((collisionDirection === "l" && !keys[39]) || (collisionDirection === "r" && !keys[37])) {
+				player.xVelocity = 0;
+				player.jumping = false;
+			} else if (collisionDirection === "b") {
+				if (gravityDirection > 0) {
+					player.grounded = true;
+					player.jumping = false;
+				} else {
+					player.yVelocity *= -0.2;
+				}
+			} else if (collisionDirection === "t") {
+				if (gravityDirection < 0) {
+					player.grounded = true;
+					player.jumping = false;
+				} else {
+					player.yVelocity *= -0.2;
+				}
+			}
+		})
+
+		// counteract gravity while player's feet are on the ground
+		if (player.grounded) {
+			player.yVelocity = 0;
+			player.canExtendJump = floatLength;
 		} else {
-			ctx.beginPath();
-			//ctx.strokeRect(button.x + scrollDistance, button.y, button.width, button.height);
-			ctx.arc(button.x + scrollDistance + (button.width / 2),
-				button.y - (button.width / 2) + 9,
-				button.width / 2,
-				Math.PI * (1 / 4),
-				Math.PI * (3 / 4));
-			ctx.stroke();
-
-			// Floaty waves
-			if (button.floatWave >= button.floatHeight) {
-				button.floatWave = 0;
-			} else {
-				button.floatWave += 0.25;
-			}
-
-			// Draw the floaty waves
-			ctx.beginPath();
-			ctx.globalAlpha = 1 - (button.floatWave / button.floatHeight);
-			ctx.arc(button.x + scrollDistance + (button.width / 2),
-				button.y - (button.width / 2) + 9 + button.floatWave,
-				button.width / 2,
-				Math.PI * (1 / 4),
-				Math.PI * (3 / 4));
-			ctx.stroke();
-
-			ctx.beginPath();
-			const secondFloat = button.floatWave >= (button.floatHeight / 2)
-				? button.floatWave - (button.floatHeight / 2)
-				: button.floatWave + (button.floatHeight / 2);
-
-			ctx.globalAlpha = 1 - (secondFloat / button.floatHeight);
-			ctx.arc(button.x + scrollDistance + (button.width / 2),
-				button.y - (button.width / 2) + 9 + secondFloat,
-				button.width / 2,
-				Math.PI * (1 / 4),
-				Math.PI * (3 / 4));
-			ctx.stroke();
+			player.canExtendJump--;
 		}
 
-		ctx.globalAlpha = 1;
-
-		let collisionDirection = coinCheck(player, button);
-		if (collisionDirection && gravSwitch < 0) {
-			gravityDirection *= -1;
-			gravSwitch = 40;
-		}
-	})
-	// Direction arrows
-	arrows.forEach(arrow => {
-		arrowShape(scrollDistance + (gameWidth * arrow.x),
-			(gameHeight * arrow.y),
-			(gameHeight * arrow.height),
-			(arrow.color.light));
-	})
-	// Draw platforms
-	ctx.strokeStyle = 'white';
-	platforms.forEach(platform => {
-		ctx.strokeRect(
-			(platform.bound) ? platform.x : platform.x + scrollDistance,
-			platform.y,
-			platform.width,
-			platform.height);
-		let collisionDirection = collisionCheck(player, platform);
-
-		if ((collisionDirection === "l" && !keys[39]) || (collisionDirection === "r" && !keys[37])) {
-			player.xVelocity = 0;
-			player.jumping = false;
-		} else if (collisionDirection === "b") {
-			if (gravityDirection > 0) {
-				player.grounded = true;
-				player.jumping = false;
-			} else {
-				player.yVelocity *= -0.2;
-			}
-		} else if (collisionDirection === "t") {
-			if (gravityDirection < 0) {
-				player.grounded = true;
-				player.jumping = false;
-			} else {
-				player.yVelocity *= -0.2;
-			}
-		}
-	})
-
-	// counteract gravity while player's feet are on the ground
-	if (player.grounded) {
-		player.yVelocity = 0;
-		player.canExtendJump = floatLength;
-	} else {
-		player.canExtendJump--;
-	}
-
-	// Move the player based on xVelocity calculations above
-	// If the player is within the 'playable' area - before scroll bounds on either side
-	if ((player.x > scrollBound) && (player.x < (gameWidth / 2))) {
-		player.x += player.xVelocity;
-	}
-	// Else, the player is pushing the screen on the RIGHT bound
-	else if (player.x >= (gameWidth / 2)) {
-		// Push the screen RIGHT if that's the direction player is walking
-		if ((player.xVelocity > 0) && (-scrollDistance < levelWidth)) {
-			scrollDistance -= player.xVelocity;
-		}
-		// otherwise allow the player to walk back toward the middle
-		else {
+		// Move the player based on xVelocity calculations above
+		// If the player is within the 'playable' area - before scroll bounds on either side
+		if ((player.x > scrollBound) && (player.x < (gameWidth / 2))) {
 			player.x += player.xVelocity;
 		}
-	}
-	// Else, the player is pushing the LEFT bound
-	else if (player.x <= scrollBound) {
-		// Push the screen LEFT if that's the direction player is walking
-		if ((player.xVelocity < 0) && (scrollDistance < 0)) {
-			scrollDistance -= player.xVelocity;
+		// Else, the player is pushing the screen on the RIGHT bound
+		else if (player.x >= (gameWidth / 2)) {
+			// Push the screen RIGHT if that's the direction player is walking
+			if ((player.xVelocity > 0) && (-scrollDistance < levelWidth)) {
+				scrollDistance -= player.xVelocity;
+			}
+			// otherwise allow the player to walk back toward the middle
+			else {
+				player.x += player.xVelocity;
+			}
 		}
-		// otherwise allow the player to walk back toward the middle
-		else {
-			player.x += player.xVelocity;
+		// Else, the player is pushing the LEFT bound
+		else if (player.x <= scrollBound) {
+			// Push the screen LEFT if that's the direction player is walking
+			if ((player.xVelocity < 0) && (scrollDistance < 0)) {
+				scrollDistance -= player.xVelocity;
+			}
+			// otherwise allow the player to walk back toward the middle
+			else {
+				player.x += player.xVelocity;
+			}
 		}
-	}
-	// yVelocity is much easier.
-	player.y += player.yVelocity;
+		// yVelocity is much easier.
+		player.y += player.yVelocity;
 
-	// Draw player
-	ctx.strokeStyle = '#12B4E9';
-	ctx.fillStyle = '#000000'
-	if (player.alive) {
-		drawPrevFrames();
-		ctx.fillRect(player.x, player.y, player.width, player.height);
-		ctx.strokeRect(player.x, player.y, player.width, player.height);
+		// Draw player
+		ctx.strokeStyle = '#12B4E9';
+		ctx.fillStyle = '#000000'
+		if (player.alive) {
+			drawPrevFrames();
+			ctx.fillRect(player.x, player.y, player.width, player.height);
+			ctx.strokeRect(player.x, player.y, player.width, player.height);
 
-		// Run the game!
-		requestAnimationFrame(update);
+			// Run the game!
+			requestAnimationFrame(update);
+		} else {
+			ctx.strokeRect(player.x, player.y, player.width, player.height);
+			player.yVelocity = deathDropSpeed;
+			deathDelay(deathPauseLength);
+		}
+
+		// Victory crown
+		crown();
+		// Score text & level titles below game screen
+		bottomText();
 	} else {
-		ctx.strokeRect(player.x, player.y, player.width, player.height);
-		player.yVelocity = deathDropSpeed;
-		deathDelay(deathPauseLength);
+		startScreen();
 	}
-
-	// Victory crown
-	crown();
-	// Score text & level titles below game screen
-	bottomText();
 }
 
+// Start screen render - runs when screenDisplay === true
+function startScreen() {
+	// make lines slightly thicker
+	ctx.lineWidth = 2;
+
+	ctx.clearRect(0, 0, gameWidth, gameHeight + 300);
+
+	ctx.strokeStyle = 'white';
+	ctx.fillStyle = 'white';
+	ctx.font = "56px 'Press Start 2P'";
+
+	ctx.strokeRect(0, 0, gameWidth, gameHeight);
+
+	// Score
+	ctx.textAlign = 'center';
+	ctx.fillText(`Jump Man II:`, gameWidth / 2, (gameHeight / 2) - 100);
+	ctx.font = "32px 'Press Start 2P'";
+	ctx.fillText(`Revenge of the Hurdles`, gameWidth / 2, (gameHeight / 2));
+
+	ctx.font = "24px 'Press Start 2P'";
+	ctx.fillText(`Press space to start`, gameWidth / 2, (gameHeight / 2) + 150);
+
+	if (keys[32]) {
+		screenDisplay = false;
+	}
+
+	// Run the game!
+	requestAnimationFrame(update);
+}
+
+// Draw the tail of the player
 function drawPrevFrames() {;
 	for (let i = player.prevPosition.length - 1; i >= 0; i--) {
 		ctx.globalAlpha = (0.3 / i) + 0.1;
