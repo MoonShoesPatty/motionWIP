@@ -10,7 +10,7 @@ const canvas = document.getElementById('gameScreen');
 const ctx = canvas.getContext('2d');
 
 // Display a text screen (start or death) screen and not level
-let screenDisplay = false;
+let screenDisplay = true;
 
 // Game size
 const gameWidth = 853;
