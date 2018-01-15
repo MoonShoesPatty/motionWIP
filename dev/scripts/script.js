@@ -13,8 +13,22 @@ const ctx = canvas.getContext('2d');
 let screenDisplay = true;
 
 // Game size
-const gameWidth = 853;
-const gameHeight = 480;
+let gameWidth = 853;
+let gameHeight = 480;
+
+console.log(window.innerWidth);
+if (window.innerWidth < 853) {
+	gameWidth = window.innerWidth - 4;
+} else if (window.innerHeight < 480) {
+	gameHeight = window.innerHeight - 20;
+}
+// if (window.innerWidth > 853) {
+// 	const gameWidth = 853;
+// 	const gameHeight = 480;
+// } else {
+// 	gameWidth = window.innerWidth;
+// 	gameHeight = gamewidth / 1.77;
+// }
 
 // Set up canvas
 canvas.width = gameWidth;
@@ -1114,18 +1128,19 @@ function bottomText() {
 	ctx.clearRect(0, gameHeight, gameWidth, 300);
 	const levelTitle = levelText();
 	
-	ctx.strokeStyle = levelTitle.color;
+	ctx.fillStyle = levelTitle.color;
 	ctx.font = "24px 'Press Start 2P'";
 
 	// Level title
 	ctx.textAlign = 'left';
-	ctx.strokeText(levelTitle.text, 10, gameHeight + 50);
+	ctx.fillText(levelTitle.text, 10, gameHeight + 50);
 
 	// Score
 	ctx.textAlign = 'right';
-	ctx.strokeText(player.score, gameWidth - 10, gameHeight + 50);
+	ctx.fillText(player.score, gameWidth - 10, gameHeight + 50);
 }
 
+// Draw the arrows between sections
 function arrowShape(offsetX, offsetY, height, arrowColor) {
 	ctx.strokeStyle = arrowColor;
 	ctx.beginPath();
