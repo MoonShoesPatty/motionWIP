@@ -1401,6 +1401,7 @@ function deathAnimation() {
 	player.y += player.yVelocity;
 	player.yVelocity += 1;
 	ctx.strokeRect(player.x, player.y, player.width, player.height);
+	bottomText();
 	requestAnimationFrame(deathAnimation);
 }
 
